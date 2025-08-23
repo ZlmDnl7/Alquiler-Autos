@@ -76,7 +76,7 @@ const VendorSidebar = () => {
                   }
                 >
                   {link.icon}
-                  <span className="capitalize text-gray-600">{link.name}</span>
+                  <span className="capitalize text-gray-600">{link.displayName}</span>
                 </NavLink>
               ))}
             </div>
@@ -98,4 +98,4 @@ const VendorSidebar = () => {
   )
 }
 
-export default VendorSidebar
+export default VendorSidebar;

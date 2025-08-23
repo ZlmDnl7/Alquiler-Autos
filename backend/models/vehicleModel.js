@@ -152,6 +152,11 @@ const vehicleSchema = new mongoose.Schema({
   isRejected:{
     type:Boolean,
     default:false
+  },
+  vendorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: false
   }
 
 });

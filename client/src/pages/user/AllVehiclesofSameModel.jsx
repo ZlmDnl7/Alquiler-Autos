@@ -112,7 +112,7 @@ const AllVehiclesofSameModel = () => {
                                 onVehicleDetail(cur._id, dispatch, navigate)
                               }
                             >
-                              <div className="text-[12px] ">Book Ride</div>
+                                                              <div className="text-[12px] ">Reservar Auto</div>
                             </button>
 
                             <button

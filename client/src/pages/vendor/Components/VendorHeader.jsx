@@ -1,20 +1,6 @@
 import PropTypes from 'prop-types';
-import { addVehicleClicked } from '../../../redux/adminSlices/actions';
-import { useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
 
-
-
-const VendorHeader = ({category,title}) => {
-  const dispatch = useDispatch()
-  const navigate = useNavigate()
-
-  //Vendor add Vehicle
-  const handleAddVehicle = () => {
-    dispatch(addVehicleClicked(true));
-    navigate('/vendorDashboard/vendorAddProduct')
-  };
-
+const VendorHeader = ({category, title, onAddVehicle}) => {
   return (
     <div className="mb-10 flex justify-between items-center ">
       <div>
@@ -25,17 +11,20 @@ const VendorHeader = ({category,title}) => {
         {title}
       </p>
       </div>
-      <button className='bg-blue-600 rounded-lg '>
-        <div className='text-white px-5 py-2 font-bold ' onClick={handleAddVehicle}>Agregar+</div>
+      <button 
+        className='bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors'
+        onClick={onAddVehicle}
+      >
+        <div className='text-white px-5 py-2 font-bold'>Agregar +</div>
       </button>
-      
-        
     </div>
   )
 }
+
 VendorHeader.propTypes = {
-  category:PropTypes.string,
+  category: PropTypes.string,
   title: PropTypes.string.isRequired,
+  onAddVehicle: PropTypes.func.isRequired,
 };
 
-export default VendorHeader
+export default VendorHeader;

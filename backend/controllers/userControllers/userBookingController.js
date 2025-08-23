@@ -9,7 +9,7 @@ import nodemailer from "nodemailer";
 export const BookCar = async (req, res, next) => {
   try {
     if (!req.body) {
-      next(errorHandler(401, "bad request on body"));
+      return next(errorHandler(401, "bad request on body"));
     }
 
     const {
@@ -21,36 +21,45 @@ export const BookCar = async (req, res, next) => {
       pickup_location,
       dropoff_location,
       pickup_district,
+      dropoff_district,
       razorpayPaymentId,
       razorpayOrderId,
     } = req.body;
 
+    console.log("Datos recibidos en BookCar:", req.body);
+
+    // Validar campos requeridos
+    if (!user_id || !vehicle_id || !totalPrice || !pickupDate || !dropoffDate || !pickup_location || !dropoff_location) {
+      return next(errorHandler(400, "Faltan campos requeridos"));
+    }
+
     const book = new Booking({
-      pickupDate,
-      dropOffDate: dropoffDate,
+      pickupDate: new Date(pickupDate),
+      dropOffDate: new Date(dropoffDate),
       userId: user_id,
       pickUpLocation: pickup_location,
       vehicleId: vehicle_id,
       dropOffLocation: dropoff_location,
-      pickUpDistrict: pickup_district,
-      totalPrice,
-      razorpayPaymentId,
-      razorpayOrderId,
-      status: "booked",
+      pickUpDistrict: pickup_district || pickup_location,
+      totalPrice: Number(totalPrice),
+      razorpayPaymentId: razorpayPaymentId || "test_payment_id",
+      razorpayOrderId: razorpayOrderId || "test_order_id",
+                        status: "reservado",
     });
-    if (!book) {
-      console.log("not booked");
-      return;
-    }
+
+    console.log("Objeto Booking a guardar:", book);
 
     const booked = await book.save();
+    console.log("Reserva guardada exitosamente:", booked);
+
     res.status(200).json({
+      ok: true,
       message: "car booked successfully",
       booked,
     });
   } catch (error) {
-    console.log(error);
-    next(errorHandler(500, "error while booking car"));
+    console.log("Error en BookCar:", error);
+    next(errorHandler(500, "error while booking car: " + error.message));
   }
 };
 
@@ -276,13 +285,29 @@ export const filterVehicles = async (req, res, next) => {
 
 export const findBookingsOfUser = async (req, res, next) => {
   try {
+    console.log("🔍 findBookingsOfUser iniciado");
+    console.log("📦 Request body:", req.body);
+    
     if (!req.body) {
+      console.log("❌ No hay request body");
       next(errorHandler(409, "_id of user is required"));
       return;
     }
+    
     const { userId } = req.body;
+    console.log("👤 User ID recibido:", userId);
+    
+    if (!userId) {
+      console.log("❌ No hay userId en el body");
+      next(errorHandler(409, "userId is required"));
+      return;
+    }
+    
     const convertedUserId = new mongoose.Types.ObjectId(userId);
+    console.log("🔄 User ID convertido:", convertedUserId);
 
+    console.log("🔍 Buscando reservas en la base de datos...");
+    
     const bookings = await Booking.aggregate([
       {
         $match: {
@@ -308,9 +333,18 @@ export const findBookingsOfUser = async (req, res, next) => {
       },
     ]);
 
+    console.log("📊 Reservas encontradas:", bookings);
+    console.log("📏 Cantidad de reservas:", bookings.length);
+    
+    // Verificar si hay reservas
+    if (bookings.length === 0) {
+      console.log("⚠️ No se encontraron reservas para este usuario");
+    }
+
     res.status(200).json(bookings);
+    console.log("✅ Respuesta enviada exitosamente");
   } catch (error) {
-    console.log(error);
+    console.log("💥 Error en findBookingsOfUser:", error);
     next(errorHandler(500, "internal error in findBookingOfUser"));
   }
 };
@@ -450,5 +484,178 @@ export const sendBookingDetailsEamil = (req, res, next) => {
   } catch (error) {
     console.log(error);
     next(errorHandler(500, "internal server error in sendBookingDetailsEmail"));
+  }
+};
+
+// Función para que los vendedores vean las reservas de sus autos
+export const findBookingsForVendor = async (req, res, next) => {
+  try {
+    console.log("🔍 findBookingsForVendor iniciado");
+    console.log("📦 Request body:", req.body);
+    
+    if (!req.body) {
+      console.log("❌ No hay request body");
+      next(errorHandler(409, "vendorId es requerido"));
+      return;
+    }
+    
+    const { vendorId } = req.body;
+    console.log("🏪 Vendor ID recibido:", vendorId);
+    
+    if (!vendorId) {
+      console.log("❌ No hay vendorId en el body");
+      next(errorHandler(409, "vendorId es requerido"));
+      return;
+    }
+    
+    const convertedVendorId = new mongoose.Types.ObjectId(vendorId);
+    console.log("🔄 Vendor ID convertido:", convertedVendorId);
+
+    console.log("🔍 Buscando reservas de los autos del vendedor...");
+    
+    // Primero, ver todas las reservas
+    const allBookings = await Booking.find({});
+    console.log("📋 Total de reservas en la base de datos:", allBookings.length);
+    
+    // Ver los primeros 3 vehículos de las reservas
+    if (allBookings.length > 0) {
+      const firstVehicles = await Vehicle.find({ _id: { $in: allBookings.slice(0, 3).map(b => b.vehicleId) } });
+      console.log("🚗 Primeros 3 vehículos de reservas:", firstVehicles.map(v => ({ id: v._id, name: v.name, addedBy: v.addedBy })));
+    }
+    
+    const bookings = await Booking.aggregate([
+      {
+        $lookup: {
+          from: "vehicles",
+          localField: "vehicleId",
+          foreignField: "_id",
+          as: "vehicleDetails",
+        },
+      },
+      {
+        $match: {
+          "vehicleDetails.addedBy": convertedVendorId.toString(),
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "userDetails",
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          bookingDetails: "$$ROOT",
+          vehicleDetails: {
+            $arrayElemAt: ["$vehicleDetails", 0],
+          },
+          userDetails: {
+            $arrayElemAt: ["$userDetails", 0],
+          },
+        },
+      },
+    ]);
+
+    console.log("📊 Reservas encontradas para el vendedor:", bookings);
+    console.log("📏 Cantidad de reservas:", bookings.length);
+    
+    if (bookings.length === 0) {
+      console.log("⚠️ No se encontraron reservas para este vendedor");
+    }
+
+    res.status(200).json(bookings);
+    console.log("✅ Respuesta enviada exitosamente");
+  } catch (error) {
+    console.log("💥 Error en findBookingsForVendor:", error);
+    next(errorHandler(500, "Error interno en findBookingsForVendor"));
+  }
+};
+
+// Función para que los admins vean todas las reservas
+export const findAllBookingsForAdmin = async (req, res, next) => {
+  try {
+    console.log("🔍 findAllBookingsForAdmin iniciado");
+    
+    console.log("🔍 Buscando todas las reservas...");
+    
+    const bookings = await Booking.aggregate([
+      {
+        $lookup: {
+          from: "vehicles",
+          localField: "vehicleId",
+          foreignField: "_id",
+          as: "vehicleDetails",
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "userDetails",
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          bookingDetails: "$$ROOT",
+          vehicleDetails: {
+            $arrayElemAt: ["$vehicleDetails", 0],
+          },
+          userDetails: {
+            $arrayElemAt: ["$userDetails", 0],
+          },
+        },
+      },
+    ]);
+
+    console.log("📊 Total de reservas encontradas:", bookings.length);
+    
+    res.status(200).json(bookings);
+    console.log("✅ Respuesta enviada exitosamente");
+  } catch (error) {
+    console.log("💥 Error en findAllBookingsForAdmin:", error);
+    next(errorHandler(500, "Error interno en findAllBookingsForAdmin"));
+  }
+};
+
+// Función para actualizar estados existentes de inglés a español
+export const updateExistingStatuses = async (req, res, next) => {
+  try {
+    console.log("🔄 Actualizando estados existentes...");
+    
+    // Actualizar estados antiguos a nuevos
+    const result = await Booking.updateMany(
+      { status: { $in: ["notBooked", "booked", "onTrip", "notPicked", "canceled", "overDue", "tripCompleted"] } },
+      [
+        {
+          $set: {
+            status: {
+              $switch: {
+                branches: [
+                  { case: { $eq: ["$status", "notBooked"] }, then: "noReservado" },
+                  { case: { $eq: ["$status", "booked"] }, then: "reservado" },
+                  { case: { $eq: ["$status", "onTrip"] }, then: "enViaje" },
+                  { case: { $eq: ["$status", "notPicked"] }, then: "noRecogido" },
+                  { case: { $eq: ["$status", "canceled"] }, then: "cancelado" },
+                  { case: { $eq: ["$status", "overDue"] }, then: "vencido" },
+                  { case: { $eq: ["$status", "tripCompleted"] }, then: "viajeCompletado" }
+                ],
+                default: "$status"
+              }
+            }
+          }
+        }
+      ]
+    );
+    
+    console.log("✅ Estados actualizados:", result);
+    res.status(200).json({ message: "Estados actualizados exitosamente", result });
+  } catch (error) {
+    console.log("💥 Error actualizando estados:", error);
+    next(errorHandler(500, "Error al actualizar estados"));
   }
 };

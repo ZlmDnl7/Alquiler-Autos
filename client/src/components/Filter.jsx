@@ -16,7 +16,7 @@ const Filter = () => {
   );
   const { variantMode } = useSelector((state) => state.sortfilterSlice);
 
-  const[filterOpen,setFilterOpen]  =  useState(false)
+  const[filterOpen,setFilterOpen]  =  useState(true)
 
   const dispatch = useDispatch();
   let transformedData = [];
@@ -28,13 +28,36 @@ const Filter = () => {
       hatchback: "car_type",
       automatic: "transmition",
       manual: "transmition",
+      petrol: "fuel_type",
+      diesel: "fuel_type",
+      electirc: "fuel_type",
+      hybrid: "fuel_type",
+      price_low: "price",
+      price_medium: "price",
+      price_high: "price",
+    };
+
+    // Mapeo de valores para el backend
+    const valueMapping = {
+      petrol: "petrol",
+      diesel: "diesel", 
+      electirc: "electirc",
+      hybrid: "hybrid",
+      suv: "SUV",
+      sedan: "Sedán",
+      hatchback: "Hatchback",
+      automatic: "automatic",
+      manual: "manual"
     };
 
     // Transform the form data object into an array of objects with the desired structure
     transformedData = Object.entries(data)
       // eslint-disable-next-line no-unused-vars
       .filter(([key, value]) => value == true)
-      .map(([key, value]) => ({ [key]: value, type: typeMapping[key] }));
+      .map(([key, value]) => ({ 
+        [key]: valueMapping[key] || value, 
+        type: typeMapping[key] 
+      }));
 
     if (transformedData && transformedData.length <= 0 && !variantMode) {
       dispatch(setFilteredData(userAllVehicles));
@@ -101,7 +124,7 @@ const Filter = () => {
           {/* <!-- Filters  form --> */}
 
          
-          <div className={` border-t border-gray-200 dropdown-content ${filterOpen ? 'open opacity-100 fade-in' : 'opacity-0 fade-out'} `}>
+          <div className={` border-t border-gray-200 dropdown-content ${filterOpen ? 'opacity-100' : 'opacity-100'} `}>
             <h3 className="sr-only">Categories</h3>
 
             <div className="border-t border-gray-200 px-4 py-6">
@@ -109,7 +132,7 @@ const Filter = () => {
                 <form className="w-full" onSubmit={handleSubmit(handleData)}>
                   <div className="w-full mb-7 ">
                     <div className="mb-5 flex justify-between items-center">
-                      <div>Type</div>{" "}
+                      <div>Tipo de Vehículo</div>{" "}
                       <div>
                         <GoPlus color="gray" />
                       </div>
@@ -167,7 +190,7 @@ const Filter = () => {
 
                   <div className="w-full border-t border-t-gray-300 pt-7">
                     <div className="mb-5 flex justify-between items-center">
-                      <div>Transmission</div>
+                      <div>Transmisión</div>
                       <div>
                         <GoPlus color="gray" />
                       </div>
@@ -208,13 +231,144 @@ const Filter = () => {
                     </div>
                   </div>
 
+                  <div className="w-full border-t border-t-gray-300 pt-7">
+                    <div className="mb-5 flex justify-between items-center">
+                      <div>Combustible</div>
+                      <div>
+                        <GoPlus color="gray" />
+                      </div>
+                    </div>
+                    <div>
+                      <FormGroup>
+                        <FormControlLabel
+                          control={
+                            <Controller
+                              name="petrol"
+                              control={control}
+                              render={({ field }) => (
+                                <Checkbox
+                                  {...field}
+                                  checked={field["value"] ?? false}
+                                />
+                              )}
+                            />
+                          }
+                          label="Gasolina"
+                        />
+                        <FormControlLabel
+                          control={
+                            <Controller
+                              name="diesel"
+                              control={control}
+                              render={({ field }) => (
+                                <Checkbox
+                                  {...field}
+                                  checked={field["value"] ?? false}
+                                />
+                              )}
+                            />
+                          }
+                          label="Diésel"
+                        />
+                        <FormControlLabel
+                          control={
+                            <Controller
+                              name="electirc"
+                              control={control}
+                              render={({ field }) => (
+                                <Checkbox
+                                  {...field}
+                                  checked={field["value"] ?? false}
+                                />
+                              )}
+                            />
+                          }
+                          label="Eléctrico"
+                        />
+                        <FormControlLabel
+                          control={
+                            <Controller
+                              name="hybrid"
+                              control={control}
+                              render={({ field }) => (
+                                <Checkbox
+                                  {...field}
+                                  checked={field["value"] ?? false}
+                                />
+                              )}
+                            />
+                          }
+                          label="Híbrido"
+                        />
+                      </FormGroup>
+                    </div>
+                  </div>
+
+                  <div className="w-full border-t border-t-gray-300 pt-7">
+                    <div className="mb-5 flex justify-between items-center">
+                      <div>Precio por Día</div>
+                      <div>
+                        <GoPlus color="gray" />
+                      </div>
+                    </div>
+                    <div>
+                      <FormGroup>
+                        <FormControlLabel
+                          control={
+                            <Controller
+                              name="price_low"
+                              control={control}
+                              render={({ field }) => (
+                                <Checkbox
+                                  {...field}
+                                  checked={field["value"] ?? false}
+                                />
+                              )}
+                            />
+                          }
+                          label="Menos de $30"
+                        />
+                        <FormControlLabel
+                          control={
+                            <Controller
+                              name="price_medium"
+                              control={control}
+                              render={({ field }) => (
+                                <Checkbox
+                                  {...field}
+                                  checked={field["value"] ?? false}
+                                />
+                              )}
+                            />
+                          }
+                          label="$30 - $50"
+                        />
+                        <FormControlLabel
+                          control={
+                            <Controller
+                              name="price_high"
+                              control={control}
+                              render={({ field }) => (
+                                <Checkbox
+                                  {...field}
+                                  checked={field["value"] ?? false}
+                                />
+                              )}
+                            />
+                          }
+                          label="Más de $50"
+                        />
+                      </FormGroup>
+                    </div>
+                  </div>
+
                   <div className="mt-7 pt-7 border-t border-t-gray-300">
                     <button
                       type="submit"
                       className="px-6 py-2 bg-black text-white rounded-md"
                       onClick={handleClick}
                     >
-                      Apply
+                      Aplicar Filtros
                     </button>
                   </div>
                 </form>

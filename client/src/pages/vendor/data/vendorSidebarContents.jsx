@@ -1,6 +1,6 @@
 
 
-import { FiShoppingBag,  } from 'react-icons/fi';
+import { FiShoppingBag, FiTruck, FiCalendar } from 'react-icons/fi';
 
 import { IoHomeOutline } from "react-icons/io5";
 
@@ -15,14 +15,17 @@ export const links = [
         {
           name:'adminHome',
           icon:<IoHomeOutline />,
+          displayName: 'Inicio'
         },
         {
           name: 'vendorAllVeihcles',
-          icon: <FiShoppingBag />,
+          icon: <FiTruck />,
+          displayName: 'Mis Vehículos'
         },
         {
           name: 'Bookings',
-          icon: <FiShoppingBag />,
+          icon: <FiCalendar />,
+          displayName: 'Reservas'
         },
         
       ],

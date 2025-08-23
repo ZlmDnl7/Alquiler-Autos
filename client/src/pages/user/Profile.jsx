@@ -72,7 +72,7 @@ function Profile() {
               <Routes>
                 <Route path="/" element={<UserProfileContent />} />
                 <Route path="/profiles" element={<UserProfileContent />} />
-                <Route path="/orders" element={<Orders />} />
+                <Route path="/pedidos" element={<Orders />} />
                 <Route path="/favorites" element={<Favorites />} />
               </Routes>
             </div>

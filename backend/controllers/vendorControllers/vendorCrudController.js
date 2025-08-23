@@ -7,6 +7,10 @@ import Vehicle from "../../models/vehicleModel.js";
 
 // vendor add vehicle
 export const vendorAddVehicle = async (req, res, next) => {
+  console.log("🚗 VEHICLE ADD REQUEST RECEIVED");
+  console.log("📝 Body:", req.body);
+  console.log("📁 Files:", req.files);
+  
   try {
     if (!req.body) {
       return next(errorHandler(500, "body cannot be empty"));

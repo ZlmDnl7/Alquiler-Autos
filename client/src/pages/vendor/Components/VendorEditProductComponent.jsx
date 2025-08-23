@@ -1,16 +1,7 @@
-import Button from "@mui/material/Button";
-import { MenuItem } from "@mui/material";
-import Box from "@mui/material/Box";
-import TextField from "@mui/material/TextField";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { IoMdClose } from "react-icons/io";
-
-import { LocalizationProvider } from "@mui/x-date-pickers";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
-import dayjs from "dayjs";
 import { toast } from "react-hot-toast";
 import { setVendorEditSuccess } from "../../../redux/vendor/vendorDashboardSlice";
 
@@ -18,39 +9,23 @@ export default function VendorEditProductComponent() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { register, handleSubmit, control, reset } = useForm();
+  const { register, handleSubmit, formState: { errors } } = useForm();
   const { vendorVehilces } = useSelector((state) => state.vendorDashboardSlice);
-  const { modelData, companyData, locationData, districtData } = useSelector(
-    (state) => state.modelDataSlice
-  );
 
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const vehicle_id = queryParams.get("vehicle_id");
 
-  let updateingItem = "";
+  let updatingItem = "";
   vendorVehilces.forEach((cur) => {
     if (cur._id === vehicle_id) {
-      updateingItem = cur;
+      updatingItem = cur;
     }
   });
 
-  const insuranceDefaultDate = updateingItem.insurance_end
-    ? dayjs(new Date(updateingItem.insurance_end))
-    : null;
-  const registerationDefaultDate = updateingItem.registeration_end
-    ? dayjs(new Date(updateingItem.registeration_end))
-    : null;
-  const pollutionDefaultDate = updateingItem.pollution_end
-    ? dayjs(new Date(updateingItem.pollution_end))
-    : null;
-
-  const onEditSubmit = async (editData) => {
-    let tostID;
+  const onEditSubmit = async (data) => {
     try {
-      if (editData && vehicle_id) {
-        tostID = toast.loading("guardando...", { position: "bottom-center" });
-        const formData = editData;
+      if (data && vehicle_id) {
         const res = await fetch(
           `/api/vendor/vendorEditVehicles/${vehicle_id}`,
           {
@@ -58,425 +33,334 @@ export default function VendorEditProductComponent() {
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ formData }),
+            body: JSON.stringify({ formData: data }),
           }
         );
 
-        if (!res.ok) {
-          toast.error("error");
-          toast.dismiss(tostID);
-        }
-
         if (res.ok) {
-          toast.dismiss(tostID);
+          toast.success("Vehículo actualizado correctamente");
           dispatch(setVendorEditSuccess(true));
+          navigate("/vendorDashboard/vendorAllVeihcles");
+        } else {
+          toast.error("Error al actualizar el vehículo");
         }
       }
-      reset();
     } catch (error) {
       console.log(error);
+      toast.error("Error de conexión");
     }
-    navigate("/vendorDashboard/vendorAddProduct");
   };
 
   const handleClose = () => {
-    navigate("/vendorDashboard/vendorAddProduct");
-  
+    navigate("/vendorDashboard/vendorAllVeihcles");
   };
 
   return (
-    <div>
-      <button onClick={handleClose} className="relative left-10 top-5">
-        <div className="padding-5 padding-2 rounded-full bg-slate-100 drop-shadow-md hover:shadow-lg hover:bg-blue-200 hover:translate-y-1 hover:translate-x-1 ">
-          <IoMdClose style={{ fontSize: "30" }} />
+    <>
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-800">Editar Vehículo</h2>
+            <button
+              onClick={handleClose}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <IoMdClose size={24} />
+            </button>
         </div>
-      </button>
-      <form onSubmit={handleSubmit(onEditSubmit)}>
-        <div className="bg-white -z-10 max-w-[1000px] mx-auto">
-          <Box
-            sx={{
-              "& .MuiTextField-root": {
-                m: 4,
-                width: "25ch",
-                color: "black", // Set text color to black
-                "& .MuiOutlinedInput-notchedOutline": {
-                  borderColor: "black", // Set outline color to black
-                },
-                "@media (max-width: 640px)": {
-                  width: "30ch",
-                },
-              },
-            }}
-            noValidate
-            autoComplete="off"
-          >
+
+          <form onSubmit={handleSubmit(onEditSubmit)} className="space-y-6">
+            {/* Primera fila */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <TextField
-                required
-                id="registeration_number"
-                label="registeration_number"
-                {...register("registeration_number")}
-                defaultValue={updateingItem?.registeration_number || ""}
-              />
-
-              <Controller
-                control={control}
-                name="company"
-                defaultValue={updateingItem?.company || ""}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    required
-                    id="company"
-                    select
-                    label="Company"
-                    error={Boolean(field.value == "")}
-                  >
-                    {companyData.map((cur, idx) => (
-                      <MenuItem value={cur} key={idx}>
-                        {cur}
-                      </MenuItem>
-                    ))}
-                  </TextField>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Número de Registro *
+                </label>
+                <input
+                  {...register("registeration_number", { required: "Campo requerido" })}
+                  defaultValue={updatingItem?.registeration_number || ""}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="ABC-1234"
+                />
+                {errors.registeration_number && (
+                  <p className="text-red-500 text-sm mt-1">{errors.registeration_number.message}</p>
                 )}
-              ></Controller>
+              </div>
 
-              <TextField
-                required
-                id="name"
-                label="name"
-                {...register("name")}
-                defaultValue={updateingItem?.name || ""}
-              />
-
-              <Controller
-                control={control}
-                name="model"
-                defaultValue={updateingItem?.model || ""}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    required
-                    id="model"
-                    select
-                    label="Model"
-                    error={Boolean(field.value == "")}
-                  >
-                    {modelData.map((cur, idx) => (
-                      <MenuItem value={cur} key={idx}>
-                        {cur}
-                      </MenuItem>
-                    ))}
-                  </TextField>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Marca *
+                </label>
+                <select
+                  {...register("company", { required: "Campo requerido" })}
+                  defaultValue={updatingItem?.company || ""}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Seleccionar marca</option>
+                  <option value="Toyota">Toyota</option>
+                  <option value="Honda">Honda</option>
+                  <option value="Ford">Ford</option>
+                  <option value="BMW">BMW</option>
+                  <option value="Mercedes">Mercedes</option>
+                  <option value="Audi">Audi</option>
+                  <option value="Volkswagen">Volkswagen</option>
+                  <option value="Nissan">Nissan</option>
+                  <option value="Hyundai">Hyundai</option>
+                  <option value="Kia">Kia</option>
+                </select>
+                {errors.company && (
+                  <p className="text-red-500 text-sm mt-1">{errors.company.message}</p>
                 )}
-              ></Controller>
-
-              <TextField
-                id="title"
-                label="title"
-                {...register("title")}
-                defaultValue={updateingItem?.car_title || ""}
-              />
-              <TextField
-                id="base_package"
-                label="base_package"
-                {...register("base_package")}
-                defaultValue={updateingItem?.base_package || ""}
-              />
-              <TextField
-                id="price"
-                type="number"
-                label="Price"
-                {...register("price")}
-                defaultValue={updateingItem?.price || ""}
-              />
-
-              <TextField
-                required
-                id="year_made"
-                type="number"
-                label="year_made"
-                {...register("year_made")}
-                defaultValue={updateingItem?.year_made || ""}
-              />
-              <Controller
-                control={control}
-                name="fuelType"
-                defaultValue={updateingItem?.fuel_type || ""}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    required
-                    id="fuel_type"
-                    select
-                    label="Fuel type"
-                    error={Boolean(field.value == "")}
-                  >
-                    <MenuItem value={"petrol"}>petrol</MenuItem>
-                    <MenuItem value={"diesel"}>diesel</MenuItem>
-                    <MenuItem value={"electirc"}>electric</MenuItem>
-                    <MenuItem value={"hybrid"}>hybrid</MenuItem>
-                  </TextField>
-                )}
-              ></Controller>
-            </div>
-
-            <div>
-              <Controller
-                name="carType"
-                control={control}
-                defaultValue={updateingItem?.car_type || ""}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    required
-                    id="car_type"
-                    select
-                    label="Car Type"
-                    error={Boolean(field.value === "")} // Add error handling for empty value
-                  >
-                    <MenuItem value="sedan">Sedan</MenuItem>
-                    <MenuItem value="suv">SUV</MenuItem>
-                    <MenuItem value="hatchback">Hatchback</MenuItem>
-                  </TextField>
-                )}
-              />
-
-              <Controller
-                control={control}
-                name="Seats"
-                defaultValue={updateingItem?.seats || ""}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    required
-                    id="seats"
-                    select
-                    label="Seats"
-                    error={Boolean(field.value === "")}
-                    defaultValue={updateingItem.seats}
-                  >
-                    <MenuItem value={"5"}>5</MenuItem>
-                    <MenuItem value={"7"}>7</MenuItem>
-                    <MenuItem value={"8"}>8</MenuItem>
-                  </TextField>
-                )}
-              ></Controller>
-
-              <Controller
-                control={control}
-                name="transmitionType"
-                defaultValue={updateingItem?.transmition || ""}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    required
-                    id="transmittion_type"
-                    select
-                    label="transmittion_type"
-                    error={Boolean(field.value == "")}
-                  >
-                    <MenuItem value={"automatic"}>automatic</MenuItem>
-                    <MenuItem value={"manual"}>manual</MenuItem>
-                  </TextField>
-                )}
-              ></Controller>
-
-              <Controller
-                control={control}
-                name="vehicleLocation"
-                defaultValue={updateingItem?.location || ""}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    required
-                    id="vehicleLocation"
-                    select
-                    label="vehicleLocation"
-                    error={Boolean(field.value == "")}
-                  >
-                    {locationData.map((cur, idx) => (
-                      <MenuItem value={cur} key={idx}>
-                        {cur}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                )}
-              ></Controller>
-
-              <Controller
-                control={control}
-                name="vehicleDistrict"
-                defaultValue={updateingItem?.district || ""}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    required
-                    id="vehicleDistrict"
-                    select
-                    label="vehicleDistrict"
-                    error={Boolean(field.value == "")}
-                  >
-                    {districtData.map((cur, idx) => (
-                      <MenuItem value={cur} key={idx}>
-                        {cur}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                )}
-              ></Controller>
-
-              <TextField
-                id="description"
-                label="description"
-                defaultValue={updateingItem?.car_description || ""}
-                multiline
-                rows={4}
-                sx={{
-                  width: "100%",
-                  "@media (min-width: 1280px)": {
-                    // for large screens (lg)
-                    minWidth: 565,
-                  },
-                }}
-                {...register("description")}
-              />
-            </div>
-            <div>
-              <Controller
-                name="insurance_end_date"
-                control={control}
-                defaultValue={insuranceDefaultDate}
-                render={({ field }) => (
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DatePicker
-                      {...field}
-                      label="Insurance end Date"
-                      inputFormat="MM/dd/yyyy" // Customize the date format as per your requirement
-                      value={field.value || null} // Ensure value is null if empty string or undefined
-                      onChange={(date) => field.onChange(date)}
-                      textField={(props) => <TextField {...props} />}
-                    />
-                  </LocalizationProvider>
-                )}
-              />
-
-              <Controller
-                control={control}
-                name="Registeration_end_date"
-                defaultValue={registerationDefaultDate}
-                render={({ field }) => (
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DatePicker
-                      {...field}
-                      label="registeration end Date"
-                      inputFormat="MM/dd/yyyy" // Customize the date format as per your requirement
-                      value={field.value || null} // Ensure value is null if empty string or undefined
-                      onChange={(date) => field.onChange(date)}
-                      textField={(props) => <TextField {...props} />}
-                    />
-                  </LocalizationProvider>
-                )}
-              ></Controller>
-
-              <Controller
-                control={control}
-                name="polution_end_date"
-                defaultValue={pollutionDefaultDate}
-                render={({ field }) => (
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DatePicker
-                      {...field}
-                      label="polution end Date "
-                      inputFormat="MM/dd/yyyy" // Customize the date format as per your requirement
-                      value={field.value || null} // Ensure value is null if empty string or undefined
-                      onChange={(date) => field.onChange(date)}
-                      textField={(props) => <TextField {...props} />}
-                    />
-                  </LocalizationProvider>
-                )}
-              ></Controller>
-
-              {/* editing for image is not done yet , default value for image is also not done yet */}
-
-              {/* file upload section */}
-              <div className="flex flex-col items-start justify-center lg:flex-row gap-10 lg:justify-between lg:items-start   ml-7 mt-10">
-                <div className="max-w-[300px] sm:max-w-[600px]">
-                  <label
-                    className="block mb-2 text-sm font-medium text-gray-900 "
-                    htmlFor="insurance_image"
-                  >
-                    Upload insurance image
-                  </label>
-                  <input
-                    className="block w-full p-2 text-sm text-gray-50 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-black focus:outline-none dark:bg-gray-200 dark:border-gray-600 dark:placeholder-gray-400"
-                    aria-describedby="user_avatar_help"
-                    id="insurance_image"
-                    type="file"
-                    multiple
-                    {...register("insurance_image")}
-                  />
-                </div>
-
-                <div className="max-w-[300px] sm:max-w-[600px]">
-                  <label
-                    className="block mb-2 text-sm font-medium text-gray-900 "
-                    htmlFor="rc_book_image"
-                  >
-                    Upload rc book image
-                  </label>
-                  <input
-                    className="block w-full p-2  text-sm text-gray-50 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-black focus:outline-none dark:bg-gray-200 dark:border-gray-600 dark:placeholder-gray-400"
-                    aria-describedby="user_avatar_help"
-                    id="rc_book_image"
-                    type="file"
-                    multiple
-                    {...register("rc_book_image")}
-                  />
-                </div>
-                <div className="max-w-[300px] sm:max-w-[600px]">
-                  <label
-                    className="block mb-2 text-sm font-medium text-gray-900 "
-                    htmlFor="polution_image"
-                  >
-                    Upload polution image
-                  </label>
-                  <input
-                    className="block w-full p-2 text-sm text-gray-50 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-black focus:outline-none dark:bg-gray-200 dark:border-gray-600 dark:placeholder-gray-900"
-                    aria-describedby="user_avatar_help"
-                    id="polution_image"
-                    type="file"
-                    multiple
-                    {...register("polution_image")}
-                  />
-                </div>
-
-                <div className="max-w-[300px] sm:max-w-[600px]">
-                  <label
-                    className="block mb-2 text-sm font-medium text-gray-900 "
-                    htmlFor="image"
-                  >
-                    Upload vehicle image
-                  </label>
-                  <input
-                    className="block w-full p-2 text-sm text-gray-50 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-black focus:outline-none dark:bg-gray-200 dark:border-gray-600 dark:placeholder-gray-900"
-                    aria-describedby="user_avatar_help"
-                    id="image"
-                    type="file"
-                    multiple
-                    {...register("image")}
-                  />
-                </div>
               </div>
             </div>
-            <div className="mt-10 flex justify-start items-center ml-7 mb-10">
-              <Button variant="contained" type="submit">
-                Submit
-              </Button>
+
+            {/* Segunda fila */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Modelo *
+                </label>
+                <input
+                  {...register("name", { required: "Campo requerido" })}
+                  defaultValue={updatingItem?.name || ""}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Corolla, Civic, Focus..."
+                />
+                {errors.name && (
+                  <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
+                )}
             </div>
-          </Box>
+
+            <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Título *
+                </label>
+                <input
+                  {...register("title", { required: "Campo requerido" })}
+                  defaultValue={updatingItem?.car_title || ""}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Toyota Corolla 2023 Luxury"
+                />
+                {errors.title && (
+                  <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Tercera fila */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Paquete Base *
+                </label>
+                <select
+                  {...register("base_package", { required: "Campo requerido" })}
+                  defaultValue={updatingItem?.base_package || ""}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Seleccionar paquete</option>
+                  <option value="Básico">Básico</option>
+                  <option value="Standard">Standard</option>
+                  <option value="Premium">Premium</option>
+                  <option value="Luxury">Luxury</option>
+                  <option value="Sport">Sport</option>
+                </select>
+                {errors.base_package && (
+                  <p className="text-red-500 text-sm mt-1">{errors.base_package.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Precio por Día *
+                </label>
+                <input
+                  {...register("price", { required: "Campo requerido" })}
+                  defaultValue={updatingItem?.price || ""}
+                  type="number"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="35"
+                />
+                {errors.price && (
+                  <p className="text-red-500 text-sm mt-1">{errors.price.message}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Cuarta fila */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Año de Fabricación *
+                </label>
+                <input
+                  {...register("year_made", { required: "Campo requerido" })}
+                  defaultValue={updatingItem?.year_made || ""}
+                  type="number"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="2021"
+                />
+                {errors.year_made && (
+                  <p className="text-red-500 text-sm mt-1">{errors.year_made.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tipo de Combustible *
+                </label>
+                <select
+                  {...register("fuel_type", { required: "Campo requerido" })}
+                  defaultValue={updatingItem?.fuel_type || ""}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Seleccionar combustible</option>
+                  <option value="petrol">Gasolina</option>
+                  <option value="diesel">Diésel</option>
+                  <option value="electirc">Eléctrico</option>
+                  <option value="hybrid">Híbrido</option>
+                </select>
+                {errors.fuel_type && (
+                  <p className="text-red-500 text-sm mt-1">{errors.fuel_type.message}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Quinta fila */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tipo de Auto *
+                </label>
+                <select
+                  {...register("car_type", { required: "Campo requerido" })}
+                  defaultValue={updatingItem?.car_type || ""}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Seleccionar tipo</option>
+                  <option value="Sedán">Sedán</option>
+                  <option value="SUV">SUV</option>
+                  <option value="Hatchback">Hatchback</option>
+                  <option value="Familiar">Familiar</option>
+                  <option value="Deportivo">Deportivo</option>
+                  <option value="Furgoneta">Furgoneta</option>
+                  <option value="Pickup">Pickup</option>
+                </select>
+                {errors.car_type && (
+                  <p className="text-red-500 text-sm mt-1">{errors.car_type.message}</p>
+                )}
+              </div>
+
+
+            </div>
+
+            {/* Sexta fila */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tipo de Transmisión *
+                </label>
+                <select
+                  {...register("transmition_type", { required: "Campo requerido" })}
+                  defaultValue={updatingItem?.transmition || ""}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Seleccionar transmisión</option>
+                  <option value="manual">Manual</option>
+                  <option value="automatic">Automática</option>
+                </select>
+                {errors.transmition_type && (
+                  <p className="text-red-500 text-sm mt-1">{errors.transmition_type.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Descripción
+                  </label>
+                <textarea
+                  {...register("description")}
+                  defaultValue={updatingItem?.car_description || ""}
+                  rows="3"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Descripción del vehículo..."
+                />
+              </div>
+                </div>
+
+            {/* Ubicación y Distrito */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Ubicación *
+                  </label>
+                  <input
+                  {...register("location", { required: "Ubicación es requerida" })}
+                  defaultValue={updatingItem?.location || ""}
+                  type="text"
+                  placeholder="Ej: Ciudad de México"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                {errors.location && (
+                  <p className="text-red-500 text-sm mt-1">{errors.location.message}</p>
+                )}
+                </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Distrito/Zona *
+                  </label>
+                  <input
+                  {...register("district", { required: "Distrito es requerido" })}
+                  defaultValue={updatingItem?.district || ""}
+                  type="text"
+                  placeholder="Ej: Polanco, Condesa, etc."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                {errors.district && (
+                  <p className="text-red-500 text-sm mt-1">{errors.district.message}</p>
+                )}
+              </div>
+                </div>
+
+            {/* Imágenes */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Imágenes del Vehículo (Opcional - mantiene las actuales si no seleccionas nuevas)
+                  </label>
+                  <input
+                {...register("image")}
+                    type="file"
+                    multiple
+                accept="image/*"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <p className="text-sm text-gray-500 mt-1">
+                <strong>💡 Consejo:</strong> Solo selecciona nuevas imágenes si quieres reemplazar las actuales.
+                <br />
+                Si no seleccionas nada, se mantendrán las imágenes existentes.
+              </p>
+            </div>
+
+            {/* Botones */}
+            <div className="flex justify-end space-x-4 pt-6">
+              <button
+                type="button"
+                onClick={handleClose}
+                className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                Actualizar Vehículo
+              </button>
+            </div>
+          </form>
         </div>
-      </form>
     </div>
+    </>
   );
 }

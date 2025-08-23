@@ -5,7 +5,7 @@ import { useSelector } from "react-redux";
 
 import { Navbar } from "../../admin/components";
 
-import AdminHomeMain from "../../admin/pages/AdminHomeMain";
+import VendorHomeMain from "./VendorHomeMain";
 import VendorAllVehicles from "../pages/VendorAllVehicles";
 import VendorSidebar from "../Components/VendorSidebar";
 import VendorBookings from "../Components/VendorBookings";
@@ -48,8 +48,8 @@ function VendorDashboard() {
 
           <div className="main_section mx-8  ">
             <Routes>
-              <Route path="/" element={<AdminHomeMain />} />
-              <Route path="/adminHome" element={<AdminHomeMain />} />
+              <Route path="/" element={<VendorHomeMain />} />
+              <Route path="/adminHome" element={<VendorHomeMain />} />
               <Route path="/vendorAllVeihcles" element={<VendorAllVehicles />} />
               <Route path="/bookings" element={<VendorBookings />} />
 

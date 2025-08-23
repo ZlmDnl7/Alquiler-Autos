@@ -8,7 +8,7 @@ Este repositorio contiene el código para un sitio web completo de alquiler de a
 Clona Alquila un Auto
 
 ```bash
-https://github.com/jeevan-aj/Rent-a-Ride.git
+https://github.com/ZlmDnl7/Alquiler-Autos.git
 ```
 
 Instala los módulos de Node

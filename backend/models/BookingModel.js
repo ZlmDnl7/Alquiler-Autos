@@ -8,17 +8,17 @@ const userSchema = new mongoose.Schema({
   },
   pickupDate: { type: Date, required: true },
   dropOffDate: { type: Date, required: true },
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // Optional, if needed
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   pickUpLocation: { type: String, required: true },
   dropOffLocation: { type: String, required: true },
   totalPrice: { type: Number, required: true },
-  razorpayOrderId: { type: String, required: true },
-  razorpayPaymentId: { type: String, required: true },
+  razorpayOrderId: { type: String, required: false },
+  razorpayPaymentId: { type: String, required: false },
   createdAt: { type: Date, default: Date.now },
   status:{
     type:String,
-    enum:["notBooked","booked","onTrip","notPicked","canceled","overDue","tripCompleted"],
-    default:"notBooked"
+    enum:["noReservado","reservado","enViaje","noRecogido","cancelado","vencido","viajeCompletado"],
+    default:"noReservado"
   }
 });
 

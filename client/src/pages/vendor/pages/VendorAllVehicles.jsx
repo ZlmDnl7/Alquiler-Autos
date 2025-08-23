@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import ModeEditOutlineIcon from "@mui/icons-material/ModeEditOutline";
@@ -19,13 +19,13 @@ import {
 import { GrStatusGood } from "react-icons/gr";
 import { MdOutlinePending } from "react-icons/md";
 import VendorHeader from "../Components/VendorHeader";
-
+import VendorAddProductModal from "../Components/VendorAddVehilceModal";
 
 const VendorAllVehicles = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [showAddModal, setShowAddModal] = useState(false);
 
-  const { isAddVehicleClicked } = useSelector((state) => state.addVehicle);
   const { vendorVehilces, vendorEditSuccess,vendorDeleteSuccess, vendorErrorSuccess } = useSelector(
     (state) => state.vendorDashboardSlice
   );
@@ -54,8 +54,7 @@ const VendorAllVehicles = () => {
       }
     };
     fetchData();
-  }, [_id, dispatch, isAddVehicleClicked]);
-
+  }, [_id, dispatch]);
 
   //edit vehicles
   const handleEditVehicle = (vehicle_id) => {
@@ -66,6 +65,15 @@ const VendorAllVehicles = () => {
   const handleDeleteVehicles = (vehicle_id) => {
     navigate(`/vendorDashboard/vendorDeleteVehicleModal?vehicle_id=${vehicle_id}`);
   }
+
+  //add vehicle
+  const handleAddVehicle = () => {
+    setShowAddModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowAddModal(false);
+  };
 
   const columns = [
     {
@@ -98,19 +106,19 @@ const VendorAllVehicles = () => {
       width: 150,
       renderCell: (params) =>
         params.row.status === "rejected" ? (
-          <div className="text-red-500   bg-red-100 p-2 rounded-lg flex items-center justify-center gap-x-1">
-            <span className="text-[8px]">rechazado</span>
-            <MdOutlinePending />
+          <div className="flex items-center gap-2">
+            <MdOutlinePending className="text-red-500" />
+            <span className="text-red-500">Rechazado</span>
           </div>
-        ) : !params.row.status ? (
-          <div className="text-yellow-500   bg-yellow-100 p-2 rounded-lg flex items-center justify-center gap-x-1">
-            <span className="text-[8px]">Pendiente</span>
-            <MdOutlinePending />
+        ) : params.row.status === true ? (
+          <div className="flex items-center gap-2">
+            <GrStatusGood className="text-green-500" />
+            <span className="text-green-500">Aprobado</span>
           </div>
         ) : (
-          <div className="text-green-500   bg-green-100 p-2 rounded-lg flex items-center justify-center gap-x-1">
-            <span className="text-[8px]">Aprobado</span>
-            <GrStatusGood />
+          <div className="flex items-center gap-2">
+            <MdOutlinePending className="text-yellow-500" />
+            <span className="text-yellow-500">Pendiente</span>
           </div>
         ),
     },
@@ -179,9 +187,24 @@ const VendorAllVehicles = () => {
       {vendorEditSuccess && <Toaster />}
       {vendorDeleteSuccess && <Toaster/>}
 
-      <VendorHeader title="Todos los Vehículos" />
+      <VendorHeader 
+        title="Mis Vehículos" 
+        category="Gestión de Vehículos"
+        onAddVehicle={handleAddVehicle}
+      />
+      
       {isVendorVehiclesEmpty ? (
-        <p>No hay solicitudes aún</p>
+        <div className="text-center py-12">
+          <div className="text-gray-400 text-6xl mb-4">🚗</div>
+          <h3 className="text-xl font-semibold text-gray-600 mb-2">No tienes vehículos aún</h3>
+          <p className="text-gray-500 mb-4">Comienza agregando tu primer vehículo para alquiler</p>
+          <button
+            onClick={handleAddVehicle}
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-medium"
+          >
+            Agregar Primer Vehículo
+          </button>
+        </div>
       ) : (
         <Box sx={{ height: "100%", width: "100%" }}>
           <DataGrid
@@ -209,6 +232,10 @@ const VendorAllVehicles = () => {
         </Box>
       )}
 
+      {/* Modal de creación de vehículos */}
+      {showAddModal && (
+        <VendorAddProductModal onClose={handleCloseModal} />
+      )}
     </div>
   );
 };

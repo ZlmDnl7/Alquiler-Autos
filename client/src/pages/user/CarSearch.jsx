@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Controller, useForm } from "react-hook-form";
 import TextField from "@mui/material/TextField";
-import { MenuItem } from "@mui/material";
+
 
 //reducers
 import { setAvailableCars, setLocationsOfDistrict, setSelectedDistrict } from "../../redux/user/selectRideSlice";
@@ -20,13 +20,13 @@ import dayjs from "dayjs";
 import useFetchLocationsLov from "../../hooks/useFetchLocationsLov";
 
 const schema = z.object({
-  dropoff_location: z.string().min(1, { message: "Dropoff location needed" }),
-  pickup_district: z.string().min(1, { message: "Pickup District needed" }),
-  pickup_location: z.string().min(1, { message: "Pickup Location needed" }),
+  dropoff_location: z.string().min(1, { message: "Ubicación de devolución requerida" }),
+  pickup_district: z.string().min(1, { message: "Distrito de recogida requerido" }),
+  pickup_location: z.string().min(1, { message: "Ubicación de recogida requerida" }),
 
   pickuptime: z.object({
     $d: z.instanceof(Date).refine((date) => date !== null && date !== undefined, {
-      message: "Date is not selected",
+      message: "Fecha de recogida no seleccionada",
     }),
   }),
 
@@ -44,7 +44,7 @@ const schema = z.object({
       $ms: z.number(), // Millisecond
       $isDayjsObject: z.boolean(), // Indicator for Day.js object
     },
-    { message: "drop-off time is required" }
+    { message: "Fecha de devolución requerida" }
   ),
 });
 
@@ -66,35 +66,44 @@ const CarSearch = () => {
   });
 
   const navigate = useNavigate();
-  const { districtData } = useSelector((state) => state.modelDataSlice);
-  const { fetchLov, isLoading } = useFetchLocationsLov();
-  const uniqueDistrict = districtData?.filter((cur, idx) => {
-    return cur !== districtData[idx + 1];
-  });
-  const { selectedDistrict, wholeData, locationsOfDistrict } = useSelector((state) => state.selectRideSlice);
+  // Ya no necesitamos estas variables para ubicaciones preestablecidas
+  // const { districtData } = useSelector((state) => state.modelDataSlice);
+  // const { fetchLov, isLoading } = useFetchLocationsLov();
+  // const uniqueDistrict = districtData?.filter((cur, idx) => {
+  //   return cur !== districtData[idx + 1];
+  // });
+  // const { selectedDistrict, wholeData, locationsOfDistrict } = useSelector((state) => state.selectRideSlice);
 
   const [pickup, setPickup] = useState(null);
   const [error, setError] = useState(null);
 
   const dispatch = useDispatch();
 
-  //useEffect to fetch data from backend for locations
-  useEffect(() => {
-    // fetchModelData(dispatch);
-    fetchLov();
-  }, []);
+  // Ya no necesitamos cargar ubicaciones preestablecidas
+  // useEffect(() => {
+  //   fetchLov();
+  // }, []);
 
-  //for showing appropriate locations according to districts
-  useEffect(() => {
-    if (selectedDistrict !== null) {
-      const showLocationInDistrict = wholeData
-        .filter((cur) => {
-          return cur.district === selectedDistrict;
-        })
-        .map((cur) => cur.location);
-      dispatch(setLocationsOfDistrict(showLocationInDistrict));
-    }
-  }, [selectedDistrict]);
+  // Ya no necesitamos estos useEffects
+  // useEffect(() => {
+  //   console.log("🔍 DEBUG FILTROS:");
+  //   console.log("districtData:", districtData);
+  //   console.log("uniqueDistrict:", uniqueDistrict);
+  //   console.log("selectedDistrict:", selectedDistrict);
+  //   console.log("locationsOfDistrict:", locationsOfDistrict);
+  //   console.log("wholeData:", wholeData);
+  // }, [districtData, uniqueDistrict, selectedDistrict, locationsOfDistrict, wholeData]);
+
+  // useEffect(() => {
+  //   if (selectedDistrict !== null) {
+  //     const showLocationInDistrict = wholeData
+  //       .filter((cur) => {
+  //         return cur.district === selectedDistrict;
+  //       })
+  //       .map((cur) => cur.location);
+  //     dispatch(setLocationsOfDistrict(showLocationInDistrict));
+  //   }
+  // }, [selectedDistrict]);
 
   //search cars
   const hanldeData = async (data) => {
@@ -121,8 +130,8 @@ const CarSearch = () => {
         });
 
         if (!res.ok) {
-          const data = await res.json();
-          setError(data.message);
+          const errorData = await res.json();
+          setError(errorData.message || "Error al buscar vehículos");
           return;
         }
 
@@ -159,8 +168,7 @@ const CarSearch = () => {
   };
 
   //this is to ensure there will be 1 day gap between pickup and dropoff date
-
-  const oneDayGap = pickup && pickup.add(1, "day");
+  const oneDayGap = pickup ? dayjs(pickup).add(1, "day") : dayjs().add(1, "day");
 
   return (
     <>
@@ -179,12 +187,20 @@ const CarSearch = () => {
               <p className="booking-done">
                 Revisa tu email para confirmar la orden. <IconX width={20} height={20} />
               </p>
+              
+              <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>💡 ¿Para qué sirve?</strong> Este formulario te permite buscar autos disponibles 
+                  según tu ubicación de recogida, devolución y fechas. <strong>Escribe cualquier ciudad o dirección</strong> - 
+                  ¡No estás limitado a opciones preestablecidas!
+                </p>
+              </div>
 
               <form onSubmit={handleSubmit(hanldeData)}>
                 <div className="box-form">
                   <div className="box-form__car-type">
                     <label htmlFor="pickup_district">
-                      <IconMapPinFilled className="input-icon" /> &nbsp; Distrito de Recogida <p className="text-red-500">*</p>
+                      <IconMapPinFilled className="input-icon" /> &nbsp; Ciudad de Recogida <p className="text-red-500">*</p>
                     </label>
                     <Controller
                       name="pickup_district"
@@ -194,26 +210,12 @@ const CarSearch = () => {
                           {...field}
                           id="pickup_district"
                           className="p-2 capitalize"
-                          select
-                          // required
+                          placeholder="Ej: Medellín, Bogotá, Nueva York..."
                           error={Boolean(errors.pickup_district)}
                           onChange={(e) => {
                             field.onChange(e.target.value);
-                            dispatch(setSelectedDistrict(e.target.value));
                           }}
-                        >
-                          {isLoading == true && (
-                            <MenuItem value="">
-                              <span className="animate-pulse">Cargando</span> <span className="animate-pulse">...</span>
-                            </MenuItem>
-                          )}
-                          {!isLoading && <MenuItem value="">Seleccionar un Lugar</MenuItem>}
-                          {uniqueDistrict?.map((cur, idx) => (
-                            <MenuItem value={cur} key={idx}>
-                              {cur}
-                            </MenuItem>
-                          ))}
-                        </TextField>
+                        />
                       )}
                     />
                     {errors.pickup_district && <p className="text-red-500">{errors.pickup_district.message}</p>}
@@ -221,7 +223,7 @@ const CarSearch = () => {
 
                   <div className="box-form__car-type ">
                     <label htmlFor="pickup_location">
-                      <IconMapPinFilled className="input-icon" /> &nbsp; Ubicación de Recogida <p className="text-red-500">*</p>
+                      <IconMapPinFilled className="input-icon" /> &nbsp; Dirección Específica de Recogida <p className="text-red-500">*</p>
                     </label>
                     <Controller
                       name="pickup_location"
@@ -230,27 +232,11 @@ const CarSearch = () => {
                         <TextField
                           {...field}
                           id="pickup_location"
-                          select
-                          // required
                           className="md:mb-10 capitalize"
-                          placeholder={"pick up location"}
+                          placeholder="Ej: Centro Comercial Santa Ana, Aeropuerto JFK..."
                           onChange={(e) => field.onChange(e.target.value)}
                           error={Boolean(errors.pickup_location)}
-                        >
-                          {isLoading && (
-                            <MenuItem value="">
-                              <span className="animate-pulse">Cargando</span> <span className="animate-pulse">...</span>
-                            </MenuItem>
-                          )}
-                          {!isLoading && <MenuItem value="">Seleccionar ubicación específica</MenuItem>}
-                          {/* conditionaly rendering options based on district selected or not */}
-                          {locationsOfDistrict &&
-                            locationsOfDistrict.map((availableLocations, idx) => (
-                              <MenuItem value={availableLocations} key={idx}>
-                                {availableLocations}
-                              </MenuItem>
-                            ))}
-                        </TextField>
+                        />
                       )}
                     />
                     {errors.pickup_location && <p className="text-red-500">{errors.pickup_location.message}</p>}
@@ -258,7 +244,7 @@ const CarSearch = () => {
 
                   <div className="box-form__car-type">
                     <label>
-                      <IconMapPinFilled className="input-icon" /> &nbsp; Ubicación de Devolución <p className="text-red-500">*</p>
+                      <IconMapPinFilled className="input-icon" /> &nbsp; Dirección Específica de Devolución <p className="text-red-500">*</p>
                     </label>
 
                     <Controller
@@ -267,28 +253,12 @@ const CarSearch = () => {
                       render={({ field }) => (
                         <TextField
                           {...field}
-                          select
-                          // required
                           error={Boolean(errors.dropoff_location)}
                           id="dropoff_location"
-                          className="md:mb-10 capitalize"
-                          placeholder={"pick up location"}
+                          className="md-mb-10 capitalize"
+                          placeholder="Ej: Hotel Hilton, Estación Central..."
                           onChange={(e) => field.onChange(e.target.value)}
-                        >
-                          {isLoading && (
-                            <MenuItem value="">
-                              <span className="animate-pulse">Cargando</span> <span className="animate-pulse">...</span>
-                            </MenuItem>
-                          )}
-                          {isLoading && <MenuItem value="">Seleccionar ubicación específica</MenuItem>}
-                          {/* conditionaly rendering options based on district selected or not */}
-                          {locationsOfDistrict &&
-                            locationsOfDistrict.map((availableLocations, idx) => (
-                              <MenuItem value={availableLocations} key={idx}>
-                                {availableLocations}
-                              </MenuItem>
-                            ))}
-                        </TextField>
+                        />
                       )}
                     />
                     {errors.dropoff_location && <p className="text-red-500">{errors.dropoff_location.message}</p>}

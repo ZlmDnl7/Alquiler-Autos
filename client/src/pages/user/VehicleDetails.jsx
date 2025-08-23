@@ -89,10 +89,41 @@ const VehicleDetails = () => {
                 <div className="lg:order-2 lg:ml-5">
                   <div className="max-w-xl overflow-hidden rounded-lg relative">
                     <img
-                      className="h-full w-full max-w-full object-cover"
+                      className="h-full w-full max-w-full object-cover main-vehicle-image"
                       src={singleVehicleDetail && singleVehicleDetail.image[0]}
                       alt={singleVehicleDetail.model}
                     />
+                    {singleVehicleDetail && singleVehicleDetail.image && singleVehicleDetail.image.length > 1 && (
+                      <>
+                        <div className="absolute top-4 right-4 bg-black bg-opacity-70 text-white text-sm px-3 py-1 rounded-full">
+                          {singleVehicleDetail.image.length} fotos
+                        </div>
+                        <button
+                          onClick={() => {
+                            const mainImage = document.querySelector('.main-vehicle-image');
+                            const currentIndex = singleVehicleDetail.image.findIndex(img => img === mainImage.src);
+                            const prevIndex = currentIndex > 0 ? currentIndex - 1 : singleVehicleDetail.image.length - 1;
+                            mainImage.src = singleVehicleDetail.image[prevIndex];
+                          }}
+                          className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-70 text-white p-2 rounded-full hover:bg-opacity-90 transition-all"
+                          title="Imagen anterior"
+                        >
+                          ←
+                        </button>
+                        <button
+                          onClick={() => {
+                            const mainImage = document.querySelector('.main-vehicle-image');
+                            const currentIndex = singleVehicleDetail.image.findIndex(img => img === mainImage.src);
+                            const nextIndex = currentIndex < singleVehicleDetail.image.length - 1 ? currentIndex + 1 : 0;
+                            mainImage.src = singleVehicleDetail.image[nextIndex];
+                          }}
+                          className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-70 text-white p-2 rounded-full hover:bg-opacity-90 transition-all"
+                          title="Siguiente imagen"
+                        >
+                          →
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
                 <div className="absolute top-2 left-5 md:left-10">
@@ -112,13 +143,21 @@ const VehicleDetails = () => {
                       singleVehicleDetail.image.map((cur, idx) => (
                         <button
                           type="button"
-                          className="flex-0 aspect-square mb-3 h-20 overflow-hidden rounded-lg border-2 border-gray-900 text-center"
+                          className="flex-0 aspect-square mb-3 h-20 overflow-hidden rounded-lg border-2 border-gray-900 text-center hover:border-blue-500 transition-colors cursor-pointer"
                           key={idx}
+                          onClick={() => {
+                            // Cambiar la imagen principal
+                            const mainImage = document.querySelector('.main-vehicle-image');
+                            if (mainImage) {
+                              mainImage.src = cur;
+                            }
+                          }}
+                          title={`Ver imagen ${idx + 1}`}
                         >
                           <img
                             className="h-full w-full object-cover"
                             src={cur}
-                            alt=""
+                            alt={`Vista ${idx + 1}`}
                           />
                         </button>
                       ))}
@@ -139,7 +178,7 @@ const VehicleDetails = () => {
                   <span>
                     <FaCarAlt />{" "}
                   </span>
-                  Model - {singleVehicleDetail.model}
+                  Modelo: {singleVehicleDetail.name || singleVehicleDetail.model || "No especificado"}
                 </div>
                 <div
                   className={`${styles.iconFlex} capitalize border border-slate-200 p-2 rounded-md`}
@@ -147,7 +186,7 @@ const VehicleDetails = () => {
                   <span>
                     <FaBuilding />
                   </span>
-                  Company - {singleVehicleDetail.company}
+                  Marca: {singleVehicleDetail.company || "No especificado"}
                 </div>
                 <div
                   className={`${styles.iconFlex} capitalize border border-slate-200 p-2 rounded-md`}
@@ -155,7 +194,7 @@ const VehicleDetails = () => {
                   <span>
                     <CiCalendarDate />
                   </span>
-                  Year model : {singleVehicleDetail.year_made}
+                  Año: {singleVehicleDetail.year_made || "No especificado"}
                 </div>
                 <div
                   className={`${styles.iconFlex} capitalize border border-slate-200 p-2 rounded-md`}
@@ -163,7 +202,7 @@ const VehicleDetails = () => {
                   <span>
                     <GiGearStickPattern />
                   </span>
-                  Transmission : {singleVehicleDetail.transmition}
+                  Transmisión: {singleVehicleDetail.transmition === 'manual' ? 'Manual' : singleVehicleDetail.transmition === 'automatic' ? 'Automática' : singleVehicleDetail.transmition || "No especificado"}
                 </div>
                 <div
                   className={`${styles.iconFlex} capitalize border border-slate-200 p-2 rounded-md`}
@@ -171,37 +210,39 @@ const VehicleDetails = () => {
                   <span>
                     <FaCarSide />
                   </span>
-                  Car Type : {singleVehicleDetail.car_type}
+                  Tipo de Auto: {singleVehicleDetail.car_type || "No especificado"}
                 </div>
-                <div
-                  className={`${styles.iconFlex} capitalize border border-slate-200 p-2 rounded-md`}
-                >
-                  <span>
-                    <MdAirlineSeatReclineExtra />
-                  </span>
-                  Seats : {singleVehicleDetail.seats}
-                </div>
+                
+                {/* Descripción del vehículo */}
+                {singleVehicleDetail.car_description && (
+                  <div className={`${styles.iconFlex} capitalize border border-slate-200 p-2 rounded-md col-span-2`}>
+                    <span>
+                      <FaCarSide />
+                    </span>
+                    Descripción: {singleVehicleDetail.car_description}
+                  </div>
+                )}
+                
                 <div
                   className={`${styles.iconFlex} capitalize border border-slate-200 p-2 rounded-md`}
                 >
                   <span>
                     <BsFillFuelPumpFill />
                   </span>
-                  Fuel type : {singleVehicleDetail.fuel_type}
+                  Tipo de Combustible: {singleVehicleDetail.fuel_type === 'petrol' ? 'Gasolina' : singleVehicleDetail.fuel_type === 'diesel' ? 'Diésel' : singleVehicleDetail.fuel_type === 'electirc' ? 'Eléctrico' : singleVehicleDetail.fuel_type === 'hybrid' ? 'Híbrido' : singleVehicleDetail.fuel_type}
                 </div>
                 <div
                   className={`${styles.iconFlex} capitalize border border-slate-200 p-2 rounded-md`}
                 >
-                  Registeration Number :{" "}
-                  {singleVehicleDetail.registeration_number}
+                  Número de Registro : {singleVehicleDetail.registeration_number}
                 </div>
                 <div
                   className={`${styles.iconFlex} capitalize border border-slate-200 p-2 rounded-md`}
                 >
-                  Rating: {singleVehicleDetail.ratting}5{" "}
-                  <span style={{ color: "gold" }}>
-                    <FaStar />
+                  <span>
+                    <FaStar style={{ color: "gold" }} />
                   </span>
+                  Calificación: {singleVehicleDetail.rating || singleVehicleDetail.ratting || 5}
                 </div>
               </div>
 

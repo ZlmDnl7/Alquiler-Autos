@@ -12,7 +12,7 @@ const tailwindConfig = {
     extend: {
       backgroundImage: {
         'hero-pattern':
-          "url('/Users/jeevan/copy/Rent a drive/client/src/pages/admin/data/welcome-bg.svg')",
+          "url('./src/pages/admin/data/welcome-bg.svg')",
       }
     },
   },

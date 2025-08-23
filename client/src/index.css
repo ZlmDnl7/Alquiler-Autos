@@ -622,14 +622,14 @@ body {
 } 
 
  .dropdown-content {
-    max-height: 0;
-    overflow: hidden;
+    max-height: 1000px;
+    overflow: visible;
     transition: max-height 0.3s ease, opacity 0.3s ease;
-    opacity: 0;
+    opacity: 1;
   }
 
   .dropdown-content.open {
-    max-height: 500px; /* Adjust based on your content's height */
+    max-height: 1000px; /* Adjust based on your content's height */
     opacity: 1;
   }
 

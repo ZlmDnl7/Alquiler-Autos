@@ -3,7 +3,7 @@ import DatauriParser from "datauri/parser.js";
 
 const storage = multer.memoryStorage();
 //configureing multer to appload single file
-export const multerUploads = multer({ storage }).array("image",3);
+export const multerUploads = multer({ storage }).array("image", 5);
 
 const parser = new DatauriParser();
 
@@ -21,7 +21,7 @@ export const dataUri = (req) => {
 
 
 //configureing multer to upload multiple files
-export const multerMultipleUploads = multer({ storage }).array("image", 3);
+export const multerMultipleUploads = multer({ storage }).array("image", 5);
 
 // converting buffer to base64
 export const base64Converter = (req) => {

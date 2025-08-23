@@ -1,8 +1,8 @@
 import styles from "../../index";
 import Herocar from "../../Assets/homepage_car_copy.jpeg";
-import CarSearch from "./CarSearch";
+
 import { HeroParallax } from "../../components/ui/Paralax";
-import { useRef } from "react";
+
 
 import Swal from "sweetalert2";
 import { useDispatch, useSelector } from "react-redux";
@@ -12,7 +12,7 @@ import Footers from "../../components/Footer";
 
 
 function Home() {
-  const ref = useRef(null);
+
   const { isSweetAlert } = useSelector((state) => state.user);
   const dispatch = useDispatch();
   const navigate = useNavigate()
@@ -65,31 +65,21 @@ function Home() {
             </p>
             <div className=" mt-10  lg:mt-[40px] flex gap-3">
               <button
-                onClick={() => {
-                  ref.current?.scrollIntoView({
-                    behavior: "smooth",
-                    block: "center",
-                  });
-                }}
-                className="bg-green-500  text-black text-[12px] md:text-[16px] py-3 px-3 rounded-sm font-semibold  lg:py-3 lg:px-5"
+                onClick={() => navigate('/vehicles')}
+                className="bg-green-600 hover:bg-green-700 text-white text-[12px] md:text-[16px] py-3 px-6 rounded-lg font-semibold lg:py-3 lg:px-8 transition-colors"
               >
-                Reservar Auto{" "}
+                Ver Vehículos Disponibles{" "}
                 <span className="ml-2">
-                  <i className="bi bi-check-circle-fill"></i>
+                  <i className="bi bi-car-front"></i>
                 </span>
               </button>
               <button
-                onClick={() => {
-                  ref.current?.scrollIntoView({
-                    behavior: "smooth",
-                    block: "center",
-                  });
-                }}
-                className="bg-black text-white rounded-sm text-[12px] md:text-[16px]  px-3 py-2 lg:py-3 lg:px-5"
+                onClick={() => navigate('/enterprise')}
+                className="bg-gray-800 hover:bg-gray-900 text-white rounded-lg text-[12px] md:text-[16px] px-6 py-3 lg:py-3 lg:px-8 transition-colors"
               >
-                Saber Más{" "}
+                Información Empresarial{" "}
                 <span>
-                  <i className="bi bi-chevron-right"></i>
+                  <i className="bi bi-building"></i>
                 </span>
               </button>
             </div>
@@ -101,8 +91,28 @@ function Home() {
         <div className="absolute h-full w-full bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
       </div>
 
-      <div ref={ref}>
-        <CarSearch />
+      {/* Sección de información adicional */}
+      <div className="text-center py-20">
+        <h2 className="text-3xl font-bold text-gray-800 mb-4">
+          ¿Por qué elegirnos?
+        </h2>
+        <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+          <div className="p-6">
+            <div className="text-4xl mb-4">🚗</div>
+            <h3 className="text-xl font-semibold mb-2">Vehículos de Calidad</h3>
+            <p className="text-gray-600">Autos modernos y bien mantenidos para tu seguridad</p>
+          </div>
+          <div className="p-6">
+            <div className="text-4xl mb-4">💰</div>
+            <h3 className="text-xl font-semibold mb-2">Precios Justos</h3>
+            <p className="text-gray-600">Tarifas competitivas sin cargos ocultos</p>
+          </div>
+          <div className="p-6">
+            <div className="text-4xl mb-4">🛡️</div>
+            <h3 className="text-xl font-semibold mb-2">Reserva Segura</h3>
+            <p className="text-gray-600">Proceso de reserva simple y confiable</p>
+          </div>
+        </div>
       </div>
 
       <HeroParallax />

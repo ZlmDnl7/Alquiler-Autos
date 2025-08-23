@@ -4,28 +4,50 @@ import User from "../models/userModel.js";
 import { refreshToken } from "../controllers/authController.js";
 
 export const verifyToken = async (req, res, next) => {
-  // const accessToken = req.cookies.access_token;
-  // const refreshToken = req.cookies.refresh_token;
-  if (!req.headers.authorization) {
-    return next(errorHandler(403, "bad request no header provided"));
+  console.log("🔐 VERIFY TOKEN MIDDLEWARE CALLED");
+  console.log("📋 Headers:", req.headers);
+  console.log("🔑 Authorization:", req.headers.authorization);
+  console.log("🍪 Cookies:", req.cookies);
+  
+  // Buscar token en headers O en cookies
+  let accessToken = null;
+  let refreshTokenValue = null;
+  
+  if (req.headers.authorization) {
+    const authHeader = req.headers.authorization.split(" ")[1];
+    if (authHeader) {
+      const tokens = authHeader.split(",");
+      refreshTokenValue = tokens[0];
+      accessToken = tokens[1];
+    }
+  }
+  
+  // Si no hay en headers, buscar en cookies
+  if (!accessToken && req.cookies) {
+    accessToken = req.cookies.access_token;
+    refreshTokenValue = req.cookies.__refresh_fdbfd9LP;
+  }
+  
+  console.log("🔑 Access Token:", accessToken ? "✅ Presente" : "❌ Ausente");
+  console.log("🔑 Refresh Token:", refreshTokenValue ? "✅ Presente" : "❌ Ausente");
+  
+  if (!accessToken && !refreshTokenValue) {
+    console.log("❌ NO TOKENS FOUND");
+    return next(errorHandler(403, "bad request no tokens provided"));
   }
 
-  const refreshToken = req.headers.authorization.split(" ")[1].split(",")[0];
-  const accessToken = req.headers.authorization.split(" ")[1].split(",")[1];
-
   if (!accessToken) {
-    if (!refreshToken) {
-      // res.clearCookie('access_token',"refresh_token")
+    if (!refreshTokenValue) {
       return next(errorHandler(401, "You are not authenticated"));
     }
 
     try {
-      const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN);
+      const decoded = jwt.verify(refreshTokenValue, process.env.REFRESH_TOKEN);
       const user = await User.findById(decoded.id);
 
       if (!user) return next(errorHandler(403, "Invalid refresh token"));
 
-      if (user.refreshToken !== refreshToken)
+      if (user.refreshToken !== refreshTokenValue)
         return next(errorHandler(403, "Invalid refresh token"));
 
       const newAccessToken = jwt.sign(
@@ -58,10 +80,9 @@ export const verifyToken = async (req, res, next) => {
       next();
     } catch (error) {
       if (error.name === "TokenExpiredError") {
-        if (!refreshToken) {
+        if (!refreshTokenValue) {
           return next(errorHandler(401, "You are not authenticated"));
         }
-
         // Access token expired, try to refresh it
         //try to refresh it
       } else {

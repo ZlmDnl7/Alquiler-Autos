@@ -585,6 +585,150 @@ POST /api/admin/changeStatus      # Cambiar estado de reserva
 
 ---
 
+## **🚗 SISTEMA DE CREACIÓN Y GESTIÓN DE VEHÍCULOS**
+
+### **📋 FUNCIONALIDADES PRINCIPALES**
+
+#### **🔧 Creación de Vehículos (Vendedores)**
+- **Formulario Inteligente:** Interfaz reactiva con validación en tiempo real
+- **Selección Múltiple de Imágenes:** Hasta 5 imágenes con vista previa
+- **Acumulación de Imágenes:** Las imágenes se suman, no se reemplazan
+- **Validación de Archivos:** Solo acepta imágenes (JPG, PNG, GIF) hasta 5MB
+- **Campos Obligatorios:** Número de registro, marca, modelo, título, paquete, precio, año, combustible, tipo
+- **Estados de Aprobación:** Pendiente → Aprobado/Rechazado por administrador
+
+#### **📊 Gestión de Vehículos (Vendedores)**
+- **Dashboard Personalizado:** Estadísticas específicas del vendedor
+- **Lista de Vehículos:** Vista completa con estados (Pendiente, Aprobado, Rechazado)
+- **Edición de Vehículos:** Modificación de información y reenvío para aprobación
+- **Eliminación Segura:** Marcado como eliminado, no borrado físicamente
+- **Filtros y Búsqueda:** Por estado, marca, modelo, año
+
+#### **👨‍💼 Panel de Administración**
+- **Aprobación de Vehículos:** Revisión y validación de vehículos pendientes
+- **Gestión de Vendedores:** Control de acceso y permisos
+- **Estadísticas Globales:** Métricas de toda la plataforma
+- **Moderación de Contenido:** Rechazo con motivo específico
+
+### **🏗️ ARQUITECTURA DEL SISTEMA**
+
+#### **🗄️ Base de Datos - Colección `vehicles`**
+```javascript
+{
+  _id: ObjectId,                    // Identificador único
+  registeration_number: String,     // Número de matrícula (ÚNICO)
+  company: String,                  // Marca del vehículo
+  name: String,                     // Modelo específico
+  title: String,                    // Título descriptivo
+  base_package: String,             // Nivel de equipamiento
+  price: Number,                    // Precio por día en euros
+  year_made: Number,                // Año de fabricación
+  fuel_type: String,                // Tipo de combustible
+  car_type: String,                 // Categoría del vehículo
+  image: [String],                  // Array de URLs de imágenes
+  isAdminApproved: Boolean,         // Estado de aprobación
+  isDeleted: Boolean,               // Marcado de eliminación
+  vendor_id: ObjectId,              // Referencia al vendedor
+  createdAt: Date,                  // Fecha de creación
+  updatedAt: Date                   // Fecha de última modificación
+}
+```
+
+#### **🔐 Sistema de Permisos**
+- **Vendedores:** Solo pueden ver y gestionar sus propios vehículos
+- **Administradores:** Acceso completo a todos los vehículos y vendedores
+- **Usuarios:** Solo pueden ver vehículos aprobados para reservas
+
+### **🎯 FLUJO DE TRABAJO**
+
+#### **1. Creación del Vehículo**
+```
+Vendedor → Llena Formulario → Sube Imágenes → Envía → Estado: Pendiente
+```
+
+#### **2. Proceso de Aprobación**
+```
+Administrador → Revisa Información → Valida Imágenes → Aprueba/Rechaza
+```
+
+#### **3. Publicación**
+```
+Vehículo Aprobado → Visible en Catálogo → Disponible para Reservas
+```
+
+### **⚡ CARACTERÍSTICAS TÉCNICAS**
+
+#### **🖼️ Sistema de Imágenes**
+- **Almacenamiento:** Cloudinary para optimización automática
+- **Formatos Soportados:** JPG, PNG, GIF
+- **Límites:** Máximo 5 imágenes por vehículo, 5MB por imagen
+- **Optimización:** Redimensionamiento automático y compresión
+- **CDN:** Distribución global para carga rápida
+
+#### **🔍 Validaciones del Sistema**
+- **Número de Registro:** Único en toda la base de datos
+- **Año de Fabricación:** Rango 1990-2025
+- **Precio:** Mínimo 1€ por día
+- **Imágenes:** Mínimo 1, máximo 5
+- **Campos Obligatorios:** Todos los campos marcados con *
+
+#### **📱 Interfaz de Usuario**
+- **Responsive Design:** Adaptable a móviles, tablets y desktop
+- **Validación en Tiempo Real:** Feedback inmediato al usuario
+- **Vista Previa de Imágenes:** Miniatura con opción de eliminación
+- **Estados Visuales:** Colores y iconos para diferentes estados
+- **Navegación Intuitiva:** Flujo claro y lógico
+
+### **🔄 INTEGRACIÓN CON OTROS MÓDULOS**
+
+#### **📅 Sistema de Reservas**
+- **Disponibilidad:** Solo vehículos aprobados aparecen en búsquedas
+- **Precios:** Se calculan automáticamente por día
+- **Información:** Datos del vehículo se muestran en detalles de reserva
+
+#### **💰 Sistema de Pagos**
+- **Cálculo de Precios:** Basado en días de alquiler × precio por día
+- **Verificación:** Solo vehículos activos pueden ser reservados
+
+#### **👥 Gestión de Usuarios**
+- **Vendedores:** Acceso al panel de creación y gestión
+- **Clientes:** Solo pueden ver vehículos aprobados
+- **Administradores:** Control total del sistema
+
+### **🚀 FUNCIONALIDADES AVANZADAS**
+
+#### **📊 Dashboard Inteligente**
+- **Estadísticas en Tiempo Real:** Contadores actualizados automáticamente
+- **Métricas de Rendimiento:** Vehículos por estado, reservas activas
+- **Gráficos Interactivos:** Visualización de datos históricos
+- **Filtros Dinámicos:** Búsqueda y filtrado avanzado
+
+#### **🔔 Sistema de Notificaciones**
+- **Aprobación de Vehículos:** Notificación al vendedor
+- **Rechazo con Motivo:** Explicación detallada del rechazo
+- **Recordatorios:** Notificaciones de vehículos pendientes
+
+#### **📈 Análisis y Reportes**
+- **Rendimiento por Vendedor:** Métricas individuales
+- **Tendencias de Mercado:** Vehículos más populares
+- **Análisis de Precios:** Comparación con el mercado
+
+### **🛡️ SEGURIDAD Y VALIDACIÓN**
+
+#### **🔒 Medidas de Seguridad**
+- **Validación del Lado del Cliente:** React Hook Form + Zod
+- **Validación del Lado del Servidor:** Middleware de autenticación
+- **Sanitización de Datos:** Prevención de inyección de código
+- **Control de Acceso:** Verificación de roles y permisos
+
+#### **📋 Validaciones de Negocio**
+- **Unicidad de Matrícula:** No se permiten duplicados
+- **Límites de Imágenes:** Control de cantidad y tamaño
+- **Estados Válidos:** Transiciones de estado controladas
+- **Integridad de Datos:** Referencias válidas entre colecciones
+
+---
+
 ## **📝 NOTAS TÉCNICAS**
 
 ### **🔄 Estado Global (Redux)**
@@ -627,9 +771,9 @@ POST /api/admin/changeStatus      # Cambiar estado de reserva
 ## **📞 CONTACTO Y SOPORTE**
 
 ### **👨‍💻 Desarrollador Principal**
-- **Nombre:** Jeevan AJ
-- **GitHub:** https://github.com/jeevan-aj
-- **LinkedIn:** https://www.linkedin.com/in/jeevan-joji-25b799275/
+- **Nombre:** ZlmDnl7
+- **GitHub:** https://github.com/ZlmDnl7
+- **LinkedIn:** [Tu LinkedIn aquí]
 
 ### **🐛 Reporte de Errores**
 - **Issues:** GitHub Issues del repositorio
@@ -640,5 +784,5 @@ POST /api/admin/changeStatus      # Cambiar estado de reserva
 
 **📄 Última actualización:** 23 de Agosto, 2025  
 **📋 Versión del documento:** 1.0.0  
-**👨‍💻 Mantenido por:** Jeevan AJ  
+**👨‍💻 Mantenido por:** ZlmDnl7  
 **🔒 Estado:** Documentación completa y actualizada

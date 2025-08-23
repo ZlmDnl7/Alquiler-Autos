@@ -13,7 +13,7 @@ import { cloudinaryConfig } from "./utils/cloudinaryConfig.js";
 const App = express();
 
 // Configurar CORS PRIMERO
-const allowedOrigins = ['https://rent-a-ride-two.vercel.app', 'http://localhost:5173'];
+const allowedOrigins = ['http://localhost:5173'];
 App.use(
   cors({
     origin: allowedOrigins,
@@ -28,7 +28,7 @@ App.use(cookieParser());
 
 // Configurar dotenv
 dotenv.config();
-const port = 3001;
+const port = process.env.PORT || 5000;
 
 // Conectar a MongoDB
 mongoose

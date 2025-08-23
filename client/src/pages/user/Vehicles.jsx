@@ -161,26 +161,30 @@ const Vehicles = () => {
                           <hr />
 
                           <div className="flex justify-center items-center gap-x-5  my-3">
-                            <Link to={"/vehicleDetails"}>
-                              <button
-                                className="bg-green-500 px-4 py-2 w-[100px] rounded-sm"
-                                onClick={() =>
-                                  onVehicleDetail(cur._id, dispatch, navigate)
-                                }
-                              >
-                                <div className="text-[12px] ">Book Ride</div>
-                              </button>
-                            </Link>
+                            <button
+                              className="bg-green-600 hover:bg-green-700 px-4 py-2 w-[110px] rounded-lg shadow-md transition-all duration-200 transform hover:scale-105"
+                              onClick={() => {
+                                onVehicleDetail(cur._id, dispatch, navigate);
+                                // Navegar directamente a la página de reserva después de un breve delay
+                                setTimeout(() => {
+                                  navigate("/checkoutPage");
+                                }, 100);
+                              }}
+                            >
+                              <div className="text-[12px] font-semibold text-white flex items-center justify-center gap-1">
+                                🚗 Reservar Auto
+                              </div>
+                            </button>
 
                             <Link to={"/vehicleDetails"}>
                               <button
-                                className="bg-black px-4 py-2 w-[100px] rounded-sm"
+                                className="bg-gray-800 hover:bg-gray-900 px-4 py-2 w-[110px] rounded-lg border-2 border-gray-600 shadow-md transition-all duration-200 transform hover:scale-105"
                                 onClick={() =>
                                   onVehicleDetail(cur._id, dispatch, navigate)
                                 }
                               >
-                                <div className="text-[12px] text-white">
-                                  Details
+                                <div className="text-[12px] font-semibold text-white flex items-center justify-center gap-1">
+                                  🔍 Ver Detalles
                                 </div>
                               </button>
                             </Link>
@@ -200,12 +204,17 @@ const Vehicles = () => {
                       key={idx}
                     >
                       <div className="mx-auto max-w-[320px] px-4 py-2 sm:px-6 sm:py-0 lg:max-w-7xl lg:px-8">
-                        <div className="aspect-h-1 aspect-w-1 w-full overflow-hidden object-contain rounded-md bg-white lg:aspect-none group-hover:opacity-75 lg:h-80 mb-3">
+                        <div className="aspect-h-1 aspect-w-1 w-full overflow-hidden object-contain rounded-md bg-white lg:aspect-none group-hover:opacity-75 lg:h-80 mb-3 relative">
                           <img
                             src={`${cur.image[0]}`}
                             alt={`cur.name`}
-                            className=" w-full object-contain object-center lg:h-full lg:w-full"
+                            className="w-full object-contain object-center lg:h-full lg:w-full"
                           />
+                          {cur.image && cur.image.length > 1 && (
+                            <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded-full">
+                              {cur.image.length} fotos
+                            </div>
+                          )}
                         </div>
                         <div className="flex justify-between items-start">
                           <h2 className="text-[14px] capitalize font-semibold tracking-tight text-gray-900">
@@ -216,7 +225,7 @@ const Vehicles = () => {
                           <div className="text-[14px]  flex flex-col items-end">
                             <p className="font-semibold">{cur.price}</p>
                             <div className="text-[6px] relative bottom-[3px]">
-                              Per Day
+                              Por Día
                             </div>
                           </div>
                         </div>
@@ -259,7 +268,7 @@ const Vehicles = () => {
                                   onVehicleDetail(cur._id, dispatch)
                                 }
                               >
-                                <div className="text-[12px] ">Book Ride</div>
+                                <div className="text-[12px] ">Reservar Auto</div>
                               </button>
                             </Link>
 

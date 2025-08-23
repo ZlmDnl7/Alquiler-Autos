@@ -107,14 +107,14 @@ export const refreshToken = async (req, res, next) => {
         maxAge: 900000,
         sameSite: "None",
         secure: true,
-        domain: "rent-a-ride-two.vercel.app",
+        domain: "localhost",
       }) // 15 minutes
       .cookie("refresh_token", newRefreshToken, {
         httpOnly: true,
         maxAge: 604800000,
         sameSite: "None",
         secure: true,
-        domain: "rent-a-ride-two.vercel.app",
+        domain: "localhost",
       }) // 7 days
       .status(200)
       .json({ accessToken: newAccessToken, refreshToken: newRefreshToken });

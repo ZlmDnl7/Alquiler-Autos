@@ -5,33 +5,50 @@ import { errorHandler } from "../../utils/error.js";
 
 const dummyData = [
 
-    //kochi
-    { id: uuidv4(), district: 'Kochi', location: 'kalamassery : skoda service', type: 'location' },
-    { id: uuidv4(), district: 'Kochi', location: 'kalamassery : volkswagen', type: 'location' },
-    { id: uuidv4(), district: 'Kochi', location: 'cheranallur : volkswagen', type: 'location' },
+    // Colombia
+    { id: uuidv4(), district: 'Bogotá', location: 'Centro Histórico : Plaza de Bolívar', type: 'location' },
+    { id: uuidv4(), district: 'Bogotá', location: 'Chapinero : Zona T', type: 'location' },
+    { id: uuidv4(), district: 'Bogotá', location: 'Usaquén : Centro Comercial Santa Ana', type: 'location' },
+    { id: uuidv4(), district: 'Medellín', location: 'El Poblado : Parque Lleras', type: 'location' },
+    { id: uuidv4(), district: 'Medellín', location: 'Laureles : Estadio', type: 'location' },
+    { id: uuidv4(), district: 'Cartagena', location: 'Centro Histórico : Plaza de los Coches', type: 'location' },
+    { id: uuidv4(), district: 'Cartagena', location: 'Bocagrande : Playa', type: 'location' },
 
-    //kottayam
+    // Estados Unidos
+    { id: uuidv4(), district: 'Nueva York', location: 'Manhattan : Times Square', type: 'location' },
+    { id: uuidv4(), district: 'Nueva York', location: 'Brooklyn : Brooklyn Bridge', type: 'location' },
+    { id: uuidv4(), district: 'Los Ángeles', location: 'Hollywood : Walk of Fame', type: 'location' },
+    { id: uuidv4(), district: 'Los Ángeles', location: 'Venice Beach : Boardwalk', type: 'location' },
+    { id: uuidv4(), district: 'Miami', location: 'South Beach : Ocean Drive', type: 'location' },
+    { id: uuidv4(), district: 'Miami', location: 'Downtown : Brickell', type: 'location' },
 
-    { id: uuidv4(), district: 'Kottayam', location: 'ettumanoor : skoda service', type: 'location' },
-    { id: uuidv4(), district: 'Kottayam', location: 'kottayam : railway station', type: 'location' },
-    { id: uuidv4(), district: 'Kottayam', location: 'thellakom : volkswagen', type: 'location' },
+    // España
+    { id: uuidv4(), district: 'Madrid', location: 'Centro : Puerta del Sol', type: 'location' },
+    { id: uuidv4(), district: 'Madrid', location: 'Retiro : Parque del Retiro', type: 'location' },
+    { id: uuidv4(), district: 'Barcelona', location: 'Ciutat Vella : Las Ramblas', type: 'location' },
+    { id: uuidv4(), district: 'Barcelona', location: 'Eixample : Sagrada Familia', type: 'location' },
+    { id: uuidv4(), district: 'Sevilla', location: 'Centro : Plaza de España', type: 'location' },
 
-    //trivandrum
+    // Italia
+    { id: uuidv4(), district: 'Roma', location: 'Centro : Coliseo', type: 'location' },
+    { id: uuidv4(), district: 'Roma', location: 'Vaticano : Basílica de San Pedro', type: 'location' },
+    { id: uuidv4(), district: 'Milán', location: 'Centro : Duomo', type: 'location' },
+    { id: uuidv4(), district: 'Florencia', location: 'Centro : Piazza del Duomo', type: 'location' },
 
-    { id: uuidv4(), district: 'Trivandrum', location: 'Nh 66 bybass : kochuveli railway station', type: 'location' },
-    { id: uuidv4(), district: 'Trivandrum', location: 'tampanur : central railway station', type: 'location' },
-    { id: uuidv4(), district: 'Trivandrum', location: 'kazhakootam : railway station', type: 'location' },
+    // Francia
+    { id: uuidv4(), district: 'París', location: 'Centro : Torre Eiffel', type: 'location' },
+    { id: uuidv4(), district: 'París', location: 'Louvre : Museo del Louvre', type: 'location' },
+    { id: uuidv4(), district: 'Lyon', location: 'Centro : Place Bellecour', type: 'location' },
 
-    //thrissur
-    { id: uuidv4(), district: 'Thrissur', location: 'thrissur : railway station', type: 'location' },
-    { id: uuidv4(), district: 'Thrissur', location: 'valarkavu : near ganam theater', type: 'location' },
-    { id: uuidv4(), district: 'Thrissur', location: 'paliyekara : evm mg', type: 'location' },
-    
+    // Alemania
+    { id: uuidv4(), district: 'Berlín', location: 'Centro : Puerta de Brandeburgo', type: 'location' },
+    { id: uuidv4(), district: 'Berlín', location: 'Mitte : Alexanderplatz', type: 'location' },
+    { id: uuidv4(), district: 'Múnich', location: 'Centro : Marienplatz', type: 'location' },
 
-    //calicut
-    { id:uuidv4() , district: 'Calicut', location: 'calicut : railway', type: 'location' },
-    { id: uuidv4(), district: 'Calicut', location: 'calicut : airport', type: 'location' },
-    { id: uuidv4(), district: 'Calicut', location: 'pavangad : evm nissan', type: 'location' },
+    // Portugal
+    { id: uuidv4(), district: 'Lisboa', location: 'Centro : Plaza del Comercio', type: 'location' },
+    { id: uuidv4(), district: 'Lisboa', location: 'Alfama : Castillo de San Jorge', type: 'location' },
+    { id: uuidv4(), district: 'Oporto', location: 'Centro : Ribeira', type: 'location' },
     
 
     //cars
@@ -97,13 +114,19 @@ const dummyData = [
   export const getCarModelData = async (req,res,next)=> {
     try{
             const availableVehicleModels  = await MasterData.find()
-            if(!availableVehicleModels){
-                return next(errorHandler(404,"no model found"))
+            
+            // Si no hay datos en la BD, devolver los datos dummy
+            if(!availableVehicleModels || availableVehicleModels.length === 0){
+                console.log("No hay datos en BD, devolviendo datos dummy");
+                return res.status(200).json(dummyData);
             }
-            res.status(201).json(availableVehicleModels)
+            
+            res.status(200).json(availableVehicleModels)
     }
     catch(error){
-        next(errorHandler(500,{'could not get model Data':error}))
+        console.log("Error al obtener datos, devolviendo datos dummy:", error);
+        // En caso de error, devolver datos dummy
+        return res.status(200).json(dummyData);
     }
   }
   

@@ -117,8 +117,8 @@ export async function displayRazorpay(values, navigate, dispatch) {
         }
       },
       prefill: {
-        name: "Jeevan aj",
-        email: "ambrahamjeevan@gmail.com",
+        name: "Usuario",
+        email: "usuario@ejemplo.com",
         contact: "8086240993",
       },
       theme: {
