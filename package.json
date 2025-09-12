@@ -5,7 +5,7 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "dev": "cd backend && nodemon server.js",
+    "dev": "cd backend; nodemon server.js",
     "start": "node backend/server.js "
   },
   "keywords": [],
