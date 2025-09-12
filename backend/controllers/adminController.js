@@ -8,24 +8,29 @@ export const getAllUsers = async (req, res, next) => {
     
     res.status(200).json(users);
   } catch (error) {
-    next(errorHandler(500, "Error al obtener usuarios"));
+    // Log del error para debugging y monitoreo
+    console.error('Error al obtener usuarios:', error.message);
+    
+    // Pasar el error original al middleware de manejo de errores
+    next(errorHandler(500, "Error al obtener usuarios", error.message));
   }
 };
 
 export const getDashboardStats = async (req, res, next) => {
   try {
-    // Contar usuarios por tipo
-    const totalUsers = await User.countDocuments({ isAdmin: false, isVendor: false });
-    const totalVendors = await User.countDocuments({ isVendor: true });
-    const totalAdmins = await User.countDocuments({ isAdmin: true });
-    
-    // Obtener usuarios recientes
-    const recentUsers = await User.find(
-      { isAdmin: false, isVendor: false },
-      { username: 1, email: 1, createdAt: 1, profilePicture: 1 }
-    )
-    .sort({ createdAt: -1 })
-    .limit(5);
+    // Usar Promise.all para optimizar las consultas paralelas
+    const [totalUsers, totalVendors, totalAdmins, recentUsers] = await Promise.all([
+      User.countDocuments({ isAdmin: false, isVendor: false }),
+      User.countDocuments({ isVendor: true }),
+      User.countDocuments({ isAdmin: true }),
+      User.find(
+        { isAdmin: false, isVendor: false },
+        { username: 1, email: 1, createdAt: 1, profilePicture: 1 }
+      )
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .lean() // Optimización: devuelve objetos JavaScript planos
+    ]);
 
     res.status(200).json({
       totalUsers,
@@ -34,6 +39,10 @@ export const getDashboardStats = async (req, res, next) => {
       recentUsers
     });
   } catch (error) {
-    next(errorHandler(500, "Error al obtener estadísticas"));
+    // Log del error para debugging y monitoreo
+    console.error('Error al obtener estadísticas del dashboard:', error.message);
+    
+    // Pasar el error original al middleware de manejo de errores
+    next(errorHandler(500, "Error al obtener estadísticas", error.message));
   }
 };
