@@ -164,7 +164,7 @@ export const editVehicle = async (req, res, next) => {
       return next(errorHandler(400, "Vehicle ID cannot be empty"));
     }
     
-    if (!req.body || !req.body.formData) {
+    if (!req.body?.formData) {
       return next(errorHandler(400, "Form data is required for editing"));
     }
 
