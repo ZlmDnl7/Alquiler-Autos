@@ -7,11 +7,10 @@ import { MdMenuOpen } from "react-icons/md";
 import { useState } from "react";
 import { Drawer } from "antd";
 
-
 function Header() {
   const { currentUser } = useSelector((state) => state.user);
   const [nav, setNav] = useState(false);
-
+  
   return (
     <div
       className={`w-full   flex justify-between items-center px-6 sm:px-12 md:px-18 lg:py-6 lg:px-28 pt-10 mt-5 md:mt-10 sm:max-w-[900px] lg:max-w-[1500px] mx-auto `}
@@ -23,12 +22,11 @@ function Header() {
           Alquila un Auto
         </div>
       </Link>
-
       <div className="hidden lg:block">
         <ul className="flex list-none">
           {navLinks.map((navlink, index) => (
             <li
-              key={index}
+              key={navlink.path || navlink.title}
               className={`${index != navLinks.length - 1 ? "mx-4" : "mx-0"}`}
             >
               <Link
@@ -76,8 +74,6 @@ function Header() {
             </div>
           )}
         </div>
-
-
         {/*  Mobile Menu */}
         <div className="relative lg:hidden flex justify-center items-center">
           <button onClick={() => setNav(!nav)}>
@@ -89,19 +85,16 @@ function Header() {
             open={nav}
           >
             <div className="flex flex-col items-start justify-between gap-y-10">
-              {navLinks.map((navlink, index) => (
-            
-                  <Link
-                    key={index}
-                    to={navlink.path}
-                    className="text-[26px]"
-                    onClick={() => setNav(false)}
-                  >
-                    {navlink.title}
-                  </Link>
-              
+              {navLinks.map((navlink) => (
+                <Link
+                  key={navlink.path || navlink.title}
+                  to={navlink.path}
+                  className="text-[26px]"
+                  onClick={() => setNav(false)}
+                >
+                  {navlink.title}
+                </Link>
               ))}
-
               {currentUser && !currentUser.isAdmin && !currentUser.isVendor && (
                 <div>
                   <Link to={"/profile"}>
@@ -111,7 +104,6 @@ function Header() {
                   </Link>
                 </div>
               )}
-
               <div>
                 <Link to={"/signIn"}>
                   {currentUser &&
@@ -128,7 +120,6 @@ function Header() {
                   )}
                 </Link>
               </div>
-
               <div>
                 {currentUser &&
                 !currentUser.isAdmin &&
@@ -167,7 +158,6 @@ function Header() {
                   )}
                 </Link>
               </div>
-
               <div>
                 {currentUser &&
                   !currentUser.isAdmin &&
