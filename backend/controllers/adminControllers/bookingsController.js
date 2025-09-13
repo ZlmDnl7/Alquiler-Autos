@@ -1,5 +1,4 @@
 import Booking from "../../models/BookingModel.js";
-import Vehicle from "../../models/vehicleModel.js";
 import { errorHandler } from "../../utils/error.js";
 
 export const allBookings = async (req, res, next) => {
@@ -20,38 +19,44 @@ export const allBookings = async (req, res, next) => {
       },
     ]);
 
-    if (!bookings) {
-      next(errorHandler(404, "no bookings found"));
+    // Verificar si el array está vacío en lugar de null/undefined
+    if (bookings.length === 0) {
+      return next(errorHandler(404, "No bookings found"));
     }
 
     res.status(200).json(bookings);
   } catch (error) {
-    console.log(error);
-    next(errorHandler(500, "error in allBookings"));
+    console.error('Error in allBookings:', error.message);
+    next(errorHandler(500, "Error retrieving bookings"));
   }
 };
 
-//chnage bookings status
-
+// Change bookings status
 export const changeStatus = async (req, res, next) => {
   try {
-    if (!req.body) {
-      next(errorHandler(409, "bad request vehicle id and new status needed"));
-      return;
-    }
     const { id, status } = req.body;
 
-    const statusChanged = await Booking.findByIdAndUpdate(id, {
-      status: status,
-    });
+    // Validación mejorada
+    if (!id || !status) {
+      return next(errorHandler(400, "Booking ID and status are required"));
+    }
+
+    const statusChanged = await Booking.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true, runValidators: true }
+    );
 
     if (!statusChanged) {
-      next(errorHandler(404, "status not changed or wrong id"));
-      return;
+      return next(errorHandler(404, "Booking not found or status not changed"));
     }
-    res.status(200).json({ message: "status changed" });
+
+    res.status(200).json({ 
+      message: "Status changed successfully",
+      booking: statusChanged 
+    });
   } catch (error) {
-    console.log(error);
-    next(errorHandler(500, "error in changeStatus"));
+    console.error('Error in changeStatus:', error.message);
+    next(errorHandler(500, "Error updating booking status"));
   }
 };
