@@ -3,7 +3,6 @@ import bcryptjs from "bcryptjs";
 import Jwt from "jsonwebtoken";
 import { errorHandler } from "../../utils/error.js";
 
-
 const expireDate = new Date(Date.now() + 3600000);
 
 export const vendorSignup = async (req, res, next) => {
@@ -62,14 +61,13 @@ export const vendorSignout = async (req, res, next) => {
   }
 };
 
-
 //vendor login or signup with google
 
 export const vendorGoogle = async (req, res, next) => {
   try {
     const user = await User.findOne({ email: req.body.email }).lean();
     if (user && user.isVendor) {
-      const { password: hashedPassword, ...rest } = user;
+      const { password, ...rest } = user;
       const token = Jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN);
 
       res
