@@ -18,7 +18,7 @@ const UserProfileContent = () => {
       dispatch(setUpdated(false));
     }
   }, [isUpdated, dispatch]);
-
+  
   return (
     <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
       <Toaster />
@@ -31,7 +31,7 @@ const UserProfileContent = () => {
         <h1 className="text-4xl font-bold text-gray-800 mb-4">Mi Perfil</h1>
         <p className="text-lg text-gray-600">Gestiona tu información personal y preferencias</p>
       </div>
-
+      
       {/* Tarjeta Principal del Perfil */}
       <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
         {/* Banner Superior */}
@@ -39,7 +39,7 @@ const UserProfileContent = () => {
           <div className="absolute inset-0 bg-black bg-opacity-20"></div>
           <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/30 to-transparent"></div>
         </div>
-
+        
         {/* Información del Perfil */}
         <div className="px-8 py-6 relative">
           {/* Avatar */}
@@ -67,7 +67,7 @@ const UserProfileContent = () => {
               </div>
             </div>
           </div>
-
+          
           {/* Información del Usuario */}
           <div className="ml-48 mb-8">
             <h2 className="text-3xl font-bold text-gray-800 mb-2">{username || "Usuario"}</h2>
@@ -79,7 +79,7 @@ const UserProfileContent = () => {
               Cuenta Activa
             </div>
           </div>
-
+          
           {/* Sección de Información Detallada */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Información Personal */}
@@ -105,13 +105,13 @@ const UserProfileContent = () => {
                   <div>
                     <p className="text-sm text-gray-500">Teléfono</p>
                     <p className="font-semibold text-gray-800">
-                      {phoneNumber ? phoneNumber : "No configurado"}
+                      {phoneNumber || "No configurado"}
                     </p>
                   </div>
                 </div>
               </div>
             </div>
-
+            
             {/* Información de Ubicación */}
             <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-100">
               <div className="flex items-center gap-3 mb-6">
@@ -127,7 +127,7 @@ const UserProfileContent = () => {
                   <div>
                     <p className="text-sm text-gray-500">Dirección</p>
                     <p className="font-semibold text-gray-800">
-                      {adress ? adress : "No configurada"}
+                      {adress || "No configurada"}
                     </p>
                   </div>
                 </div>
@@ -143,7 +143,7 @@ const UserProfileContent = () => {
               </div>
             </div>
           </div>
-
+          
           {/* Acciones del Perfil */}
           <div className="mt-8 pt-8 border-t border-gray-200">
             <div className="flex flex-wrap gap-4">
@@ -165,7 +165,7 @@ const UserProfileContent = () => {
           </div>
         </div>
       </div>
-
+      
       {/* Estadísticas del Usuario */}
       <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 text-center">
