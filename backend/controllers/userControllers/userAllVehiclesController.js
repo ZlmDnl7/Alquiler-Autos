@@ -1,11 +1,9 @@
 import vehicle from "../../models/vehicleModel.js";
 import { errorHandler } from "../../utils/error.js";
-
 //show all vehicles to user
 export const listAllVehicles = async (req, res, next) => {
   try {
     const vehicles = await vehicle.find();
-
     if (!vehicles) {
       return next(errorHandler(404, "no vehicles found"));
     }
@@ -15,7 +13,6 @@ export const listAllVehicles = async (req, res, next) => {
     next(errorHandler(500, "something went wrong"));
   }
 };
-
 //show one vehicle Detail to user
 export const showVehicleDetails = async (req, res, next) => {
   try {
@@ -24,18 +21,15 @@ export const showVehicleDetails = async (req, res, next) => {
     }
     const { id } = req.body;
     const vehicleDetail = await vehicle.findById(id);
-
     if (!vehicleDetail) {
       return next(errorHandler(404, "no vehicles found"));
     }
-
     res.status(200).json(vehicleDetail);
   } catch (error) {
     console.log(error);
     next(errorHandler(500, "something went wrong"));
   }
 };
-
 //check vehicle availabilitty
 export const checkAvailability = async (req, res, next) => {
   try {
@@ -43,21 +37,17 @@ export const checkAvailability = async (req, res, next) => {
       next(errorHandler(401, "bad request no body"));
     }
     const { pickupDate, dropOffDate, vehicleId } = req.body;
-
     if (!pickupDate || !dropOffDate || !vehicleId) {
       console.log("pickup , dropffdate and vehicleId is required");
       next(errorHandler(409, "pickup , dropffdate and vehicleId is required"));
     }
-
     // Check if pickupDate is before dropOffDate
     if (pickupDate >= dropOffDate) {
       return next(errorHandler(409, "Invalid date range"));
     }
-
     const sixHoursLater = new Date(dropOffDate);
     sixHoursLater.setTime(sixHoursLater.getTime() + 6 * 60 * 60 * 1000);
     console.log(sixHoursLater)
-
     //checking data base  find overlapping pickup and dropoffDates
     const existingBookings = await Booking.find({
       vehicleId,
@@ -74,7 +64,6 @@ export const checkAvailability = async (req, res, next) => {
         },
       ],
     });
-
     // If there are overlapping bookings, return an error
     if (existingBookings.length > 0) {
       return next(
@@ -84,7 +73,6 @@ export const checkAvailability = async (req, res, next) => {
         )
       );
     }
-
     // If no overlapping bookings, vehicle is available
     return res
       .status(200)
@@ -94,9 +82,7 @@ export const checkAvailability = async (req, res, next) => {
     next(errorHandler(500, "error in checkAvailability"));
   }
 };
-
 // ---------------------
-
 //search car filter in homepage
 export const searchCar = async (req, res, next) => {
   try {
@@ -104,11 +90,9 @@ export const searchCar = async (req, res, next) => {
       const {
         pickup_district,
         pickup_location,
-        dropoff_location,
         pickuptime,
         dropofftime,
       } = req.body;
-
       //checking if droOfftime is before or equals to pickupTime
       const pickuptimeDate = new Date(pickuptime.$d);
       const dropofftimeDate = new Date(dropofftime.$d);
@@ -118,7 +102,6 @@ export const searchCar = async (req, res, next) => {
       // Convert milliseconds to days
       const dateDifferenceInDays =
         dateDifferenceInMilliseconds / (1000 * 60 * 60 * 24);
-
       if (dropofftime.$d <= pickuptime.$d || dateDifferenceInDays < 1) {
         return next(errorHandler(401, "dropoff date should be larger"));
       } else {
