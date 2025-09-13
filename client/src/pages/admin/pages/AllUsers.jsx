@@ -23,9 +23,12 @@ const AllUsers = () => {
         const data = await res.json();
         setUsers(data);
       } else {
+        const errorText = await res.text();
+        console.error("Error del servidor:", res.status, errorText);
         toast.error("Error al cargar usuarios");
       }
     } catch (error) {
+      console.error("Error al obtener usuarios:", error);
       toast.error("Error de conexión");
     } finally {
       setLoading(false);
@@ -41,8 +44,11 @@ const AllUsers = () => {
         <div className="flex items-center gap-2">
           <img
             src={params.row.profilePicture || "https://via.placeholder.com/40"}
-            alt="Profile"
+            alt={`Foto de perfil de ${params.row.username}`}
             className="w-10 h-10 rounded-full"
+            onError={(e) => {
+              e.target.src = "https://via.placeholder.com/40";
+            }}
           />
           <span>{params.row.username}</span>
         </div>
@@ -84,11 +90,16 @@ const AllUsers = () => {
       headerName: "Fecha de Registro",
       width: 200,
       renderCell: (params) => {
-        return new Date(params.row.createdAt).toLocaleDateString("es-ES", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        });
+        try {
+          return new Date(params.row.createdAt).toLocaleDateString("es-ES", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          });
+        } catch (dateError) {
+          console.error("Error al formatear fecha:", dateError);
+          return "Fecha inválida";
+        }
       },
     },
   ];
@@ -97,6 +108,7 @@ const AllUsers = () => {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <span className="sr-only">Cargando usuarios...</span>
       </div>
     );
   }
@@ -112,11 +124,19 @@ const AllUsers = () => {
         <DataGrid
           rows={users}
           columns={columns}
-          pageSize={10}
-          rowsPerPageOptions={[10, 25, 50]}
-          disableSelectionOnClick
+          initialState={{
+            pagination: {
+              paginationModel: { page: 0, pageSize: 10 },
+            },
+          }}
+          pageSizeOptions={[10, 25, 50]}
+          disableRowSelectionOnClick
           className="bg-white"
           getRowId={(row) => row._id}
+          localeText={{
+            noRowsLabel: 'No hay usuarios disponibles',
+            footerRowSelected: (count) => `${count} usuarios seleccionados`,
+          }}
         />
       </div>
     </div>
