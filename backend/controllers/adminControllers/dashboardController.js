@@ -1,19 +1,17 @@
 import { errorHandler } from "../../utils/error.js";
-import vehicle from "../../models/vehicleModel.js";
-import Vehicle from "../../models/vehicleModel.js";
-
+import Vehicle from "../../models/vehicleModel.js"; // Un solo import unificado
 import { uploader } from "../../utils/cloudinaryConfig.js";
 import { dataUri } from "../../utils/multer.js";
 
-//admin addVehicle
+// Admin addVehicle
 export const addProduct = async (req, res, next) => {
   try {
     if (!req.body) {
-      return next(errorHandler(500, "body cannot be empty"));
+      return next(errorHandler(400, "Request body cannot be empty"));
     }
-
+    
     if (!req.files || req.files.length === 0) {
-      return next(errorHandler(500, "image cannot be empty"));
+      return next(errorHandler(400, "Image files are required"));
     }
 
     const {
@@ -38,11 +36,12 @@ export const addProduct = async (req, res, next) => {
     } = req.body;
 
     const uploadedImages = [];
-
-    //converting the buffer to base64
+    
+    // Converting the buffer to base64
     const fileDataUri = dataUri(req);
-
+    
     try {
+      // Upload images to Cloudinary
       await Promise.all(
         fileDataUri.map(async (cur) => {
           try {
@@ -50,114 +49,123 @@ export const addProduct = async (req, res, next) => {
               public_id: cur.filename,
             });
             uploadedImages.push(result.secure_url);
-          } catch (error) {
-            console.log(error, {
-              message: "error while uploading to cloudinary",
-            });
+          } catch (uploadError) {
+            console.error('Error uploading to Cloudinary:', uploadError.message);
+            throw uploadError;
           }
         })
       );
 
-      try {
-        if (uploadedImages && uploadedImages) {
-          const addVehicle = new vehicle({
-            registeration_number,
-            company,
-            name,
-            image: uploadedImages,
-            model,
-            car_title: title,
-            car_description: description,
-            base_package,
-            price,
-            year_made,
-            fuel_type,
-            seats: seat,
-            transmition: transmition_type,
-            insurance_end: insurance_end_date,
-            registeration_end: registeration_end_date,
-            pollution_end: polution_end_date,
-            car_type,
-            created_at: Date.now(),
-            location,
-            district,
-          });
-
-          await addVehicle.save();
-          res.status(200).json({
-            message: "product added to mb & cloudninary successfully",
-          });
-        } else {
-          throw new Error(
-            "failed upload to  cloudinary check in dashboardController addProduct"
-          );
-        }
-      } catch (error) {
-        if (error.code === 11000) {
-          return next(errorHandler(409, "product already exists"));
-        }
-
-        console.log(error);
-        next(errorHandler(500, "product not uploaded"));
+      // Validate successful uploads
+      if (uploadedImages.length === 0) {
+        throw new Error("No images were uploaded successfully");
       }
-    } catch (error) {
-      next(errorHandler(500, "could not upload image to cloudinary"));
+
+      // Create new vehicle
+      const addVehicle = new Vehicle({
+        registeration_number,
+        company,
+        name,
+        image: uploadedImages,
+        model,
+        car_title: title,
+        car_description: description,
+        base_package,
+        price,
+        year_made,
+        fuel_type,
+        seats: seat,
+        transmition: transmition_type,
+        insurance_end: insurance_end_date,
+        registeration_end: registeration_end_date,
+        pollution_end: polution_end_date,
+        car_type,
+        created_at: Date.now(),
+        location,
+        district,
+      });
+
+      await addVehicle.save();
+      
+      res.status(201).json({
+        message: "Vehicle added successfully",
+        vehicle: addVehicle
+      });
+
+    } catch (cloudinaryError) {
+      console.error('Cloudinary upload error:', cloudinaryError.message);
+      return next(errorHandler(500, "Failed to upload images to cloud storage"));
     }
+
   } catch (error) {
-    next(errorHandler(400, "vehicle failed to add "), console.log(error));
+    // Handle duplicate key error
+    if (error.code === 11000) {
+      const duplicateField = Object.keys(error.keyPattern || {})[0];
+      const duplicateValue = error.keyValue ? error.keyValue[duplicateField] : 'unknown';
+      return next(errorHandler(409, `${duplicateField} '${duplicateValue}' already exists`));
+    }
+    
+    console.error('Error adding vehicle:', error.message);
+    next(errorHandler(500, "Failed to add vehicle"));
   }
 };
 
-//show all vehicles to admin
+// Show all vehicles to admin
 export const showVehicles = async (req, res, next) => {
   try {
-    const vehicles = await vehicle.find();
-
-    if (!vehicles) {
-      return next(errorHandler(404, "no vehicles found"));
+    const vehicles = await Vehicle.find({ isDeleted: { $ne: true } });
+    
+    if (vehicles.length === 0) {
+      return next(errorHandler(404, "No vehicles found"));
     }
-
+    
     res.status(200).json(vehicles);
   } catch (error) {
-    console.log(error);
-    next(errorHandler(500, "something went wrong"));
+    console.error('Error fetching vehicles:', error.message);
+    next(errorHandler(500, "Error retrieving vehicles"));
   }
 };
 
-//admin delete vehicle
-
+// Admin delete vehicle
 export const deleteVehicle = async (req, res, next) => {
   try {
     const vehicle_id = req.params.id;
+    
     if (!vehicle_id) {
-      return;
+      return next(errorHandler(400, "Vehicle ID is required"));
     }
 
-    const deleted = await Vehicle.findByIdAndUpdate(vehicle_id, {
-      isDeleted: true,
-    });
+    const deleted = await Vehicle.findByIdAndUpdate(
+      vehicle_id,
+      { isDeleted: true },
+      { new: true }
+    );
+    
     if (!deleted) {
-      return next(500, "not able to delete");
+      return next(errorHandler(404, "Vehicle not found"));
     }
-    res.status(200).json({ message: "deleted successfully" });
+    
+    res.status(200).json({ 
+      message: "Vehicle deleted successfully",
+      vehicleId: vehicle_id 
+    });
   } catch (error) {
-    next(errorHandler(500, "something went wrong"));
+    console.error('Error deleting vehicle:', error.message);
+    next(errorHandler(500, "Error deleting vehicle"));
   }
 };
 
-//edit vehicle listed by admin
-
+// Edit vehicle listed by admin
 export const editVehicle = async (req, res, next) => {
   try {
-    //get the id of vehicle to edit through req.params
     const vehicle_id = req.params.id;
-
+    
     if (!vehicle_id) {
-      return next(errorHandler(401, "cannot be empty"));
+      return next(errorHandler(400, "Vehicle ID cannot be empty"));
     }
-
+    
     if (!req.body || !req.body.formData) {
-      return next(errorHandler(404, "Add data to edit first"));
+      return next(errorHandler(400, "Form data is required for editing"));
     }
 
     const {
@@ -181,53 +189,55 @@ export const editVehicle = async (req, res, next) => {
       vehicleDistrict,
     } = req.body.formData;
 
-    try {
-      const edited = await Vehicle.findByIdAndUpdate(
-        vehicle_id,
-        {
-          registeration_number,
-          company,
-          name,
-          model,
-          car_title: title,
-          car_description: description,
-          base_package,
-          price,
-          year_made,
-          fuel_type: fuelType,
-          seats: Seats,
-          transmition: transmitionType,
-          insurance_end: insurance_end_date,
-          registeration_end: Registeration_end_date,
-          pollution_end: polution_end_date,
-          car_type: carType,
-          updated_at: Date.now(),
-          location: vehicleLocation,
-          district: vehicleDistrict,
-        },
-
-        { new: true }
-      );
-      if (!edited) {
-        return next(errorHandler(404, "data with this id not found"));
-      }
-
-      res.status(200).json(edited);
-    } catch (error) {
-      if (error.code == 11000 && error.keyPattern && error.keyValue) {
-        const duplicateField = Object.keys(error.keyPattern)[0];
-        const duplicateValue = error.keyValue[duplicateField];
-
-        return next(
-          errorHandler(
-            409,
-            `${duplicateField} '${duplicateValue}' already exists`
-          )
-        );
-      }
+    const edited = await Vehicle.findByIdAndUpdate(
+      vehicle_id,
+      {
+        registeration_number,
+        company,
+        name,
+        model,
+        car_title: title,
+        car_description: description,
+        base_package,
+        price,
+        year_made,
+        fuel_type: fuelType,
+        seats: Seats,
+        transmition: transmitionType,
+        insurance_end: insurance_end_date,
+        registeration_end: Registeration_end_date,
+        pollution_end: polution_end_date,
+        car_type: carType,
+        updated_at: Date.now(),
+        location: vehicleLocation,
+        district: vehicleDistrict,
+      },
+      { new: true, runValidators: true }
+    );
+    
+    if (!edited) {
+      return next(errorHandler(404, "Vehicle not found"));
     }
+    
+    res.status(200).json({
+      message: "Vehicle updated successfully",
+      vehicle: edited
+    });
+    
   } catch (error) {
-    console.log(error);
-    next(errorHandler(500, "something went wrong"));
+    // Handle duplicate key error
+    if (error.code === 11000 && error.keyPattern && error.keyValue) {
+      const duplicateField = Object.keys(error.keyPattern)[0];
+      const duplicateValue = error.keyValue[duplicateField];
+      return next(
+        errorHandler(
+          409,
+          `${duplicateField} '${duplicateValue}' already exists`
+        )
+      );
+    }
+    
+    console.error('Error editing vehicle:', error.message);
+    next(errorHandler(500, "Error updating vehicle"));
   }
 };
