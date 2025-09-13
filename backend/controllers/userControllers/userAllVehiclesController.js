@@ -1,5 +1,6 @@
 import vehicle from "../../models/vehicleModel.js";
 import { errorHandler } from "../../utils/error.js";
+
 //show all vehicles to user
 export const listAllVehicles = async (req, res, next) => {
   try {
@@ -9,10 +10,11 @@ export const listAllVehicles = async (req, res, next) => {
     }
     res.status(200).json(vehicles);
   } catch (error) {
-    console.log(error);
+    console.log("Error in listAllVehicles:", error);
     next(errorHandler(500, "something went wrong"));
   }
 };
+
 //show one vehicle Detail to user
 export const showVehicleDetails = async (req, res, next) => {
   try {
@@ -26,10 +28,11 @@ export const showVehicleDetails = async (req, res, next) => {
     }
     res.status(200).json(vehicleDetail);
   } catch (error) {
-    console.log(error);
+    console.log("Error in showVehicleDetails:", error);
     next(errorHandler(500, "something went wrong"));
   }
 };
+
 //check vehicle availabilitty
 export const checkAvailability = async (req, res, next) => {
   try {
@@ -78,10 +81,11 @@ export const checkAvailability = async (req, res, next) => {
       .status(200)
       .json({ message: "Vehicle is available for booking" });
   } catch (error) {
-    console.log(error);
+    console.log("Error in checkAvailability:", error);
     next(errorHandler(500, "error in checkAvailability"));
   }
 };
+
 // ---------------------
 //search car filter in homepage
 export const searchCar = async (req, res, next) => {
@@ -174,6 +178,7 @@ export const searchCar = async (req, res, next) => {
       res.status(400).json({ message: "please provide all the details" });
     }
   } catch (error) {
-    next(errorHandler(500, "something went wrong while Searching car"));
+    console.log("Error in searchCar:", error);
+    next(errorHandler(500, `Error searching cars: ${error.message}`));
   }
 };
