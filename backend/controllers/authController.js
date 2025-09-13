@@ -7,7 +7,6 @@ const expireDate = new Date(Date.now() + 3600000);
 
 export const signUp = async (req, res, next) => {
   const { username, email, password } = req.body;
-
   try {
     // Verificar si el usuario ya existe
     const existingUser = await User.findOne({ 
@@ -22,7 +21,7 @@ export const signUp = async (req, res, next) => {
         return next(errorHandler(400, "El nombre de usuario ya está en uso"));
       }
     }
-
+    
     const hashedPassword = bcryptjs.hashSync(password, 10);
     
     // Solo incluir campos que se proporcionen
@@ -58,49 +57,53 @@ export const signUp = async (req, res, next) => {
   }
 };
 
-//refreshTokens
+// Refresh Tokens
 export const refreshToken = async (req, res, next) => {
-  // const refreshToken = req.cookies.refresh_token;
-
   if (!req.headers.authorization) {
-    return next(errorHandler(403, "bad request no header provided"));
+    return next(errorHandler(403, "Bad request: no authorization header provided"));
   }
-
-  const refreshToken = req.headers.authorization.split(" ")[1].split(",")[0];
-  const accessToken = req.headers.authorization.split(" ")[1].split(",")[1];
-
-  console.log(refreshToken);
-  console.log(accessToken);
-
+  
+  const authParts = req.headers.authorization.split(" ")[1]?.split(",");
+  
+  if (!authParts || authParts.length < 2) {
+    return next(errorHandler(400, "Invalid authorization header format"));
+  }
+  
+  const refreshToken = authParts[0];
+  const accessToken = authParts[1];
+  
+  console.log('Refresh token:', refreshToken);
+  console.log('Access token:', accessToken);
+  
   if (!refreshToken) {
-    // res.clearCookie("access_token", "refresh_token");
     return next(errorHandler(401, "You are not authenticated"));
   }
-
+  
   try {
     const decoded = Jwt.verify(refreshToken, process.env.REFRESH_TOKEN);
     const user = await User.findById(decoded.id);
-
+    
     if (!user) return next(errorHandler(403, "Invalid refresh token"));
+    
     if (user.refreshToken !== refreshToken) {
-      // res.clearCookie("access_token", "refresh_token");
       return next(errorHandler(403, "Invalid refresh token"));
     }
-
+    
     const newAccessToken = Jwt.sign(
       { id: user._id },
       process.env.ACCESS_TOKEN,
       { expiresIn: "15m" }
     );
+    
     const newRefreshToken = Jwt.sign(
       { id: user._id },
       process.env.REFRESH_TOKEN,
       { expiresIn: "7d" }
     );
-
+    
     // Update the refresh token in the database for the user
     await User.updateOne({ _id: user._id }, { refreshToken: newRefreshToken });
-
+    
     res
       .cookie("access_token", newAccessToken, {
         httpOnly: true,
@@ -119,7 +122,8 @@ export const refreshToken = async (req, res, next) => {
       .status(200)
       .json({ accessToken: newAccessToken, refreshToken: newRefreshToken });
   } catch (error) {
-    next(errorHandler(500, "error in refreshToken controller in server"));
+    console.error('Error in refreshToken:', error.message);
+    next(errorHandler(500, "Error in refreshToken controller"));
   }
 };
 
@@ -127,91 +131,83 @@ export const signIn = async (req, res, next) => {
   const { email, password } = req.body;
   try {
     const validUser = await User.findOne({ email });
-    if (!validUser) return next(errorHandler(404, "user not found"));
+    if (!validUser) return next(errorHandler(404, "User not found"));
+    
     const validPassword = bcryptjs.compareSync(password, validUser.password);
-    if (!validPassword) return next(errorHandler(401, "wrong credentials"));
-    let accessToken = "";
-    let refreshToken = "";
-    accessToken = Jwt.sign({ id: validUser._id }, process.env.ACCESS_TOKEN, {
-      expiresIn: "15m",
-    }); //accessToken expires in 15 minutes
-    refreshToken = Jwt.sign({ id: validUser._id }, process.env.REFRESH_TOKEN, {
-      expiresIn: "7d",
-    }); //refreshToken expires in 7 days
-
+    if (!validPassword) return next(errorHandler(401, "Wrong credentials"));
+    
+    const accessToken = Jwt.sign(
+      { id: validUser._id }, 
+      process.env.ACCESS_TOKEN, 
+      { expiresIn: "15m" }
+    );
+    
+    const refreshToken = Jwt.sign(
+      { id: validUser._id }, 
+      process.env.REFRESH_TOKEN, 
+      { expiresIn: "7d" }
+    );
+    
     const updatedData = await User.findByIdAndUpdate(
       { _id: validUser._id },
       { refreshToken },
       { new: true }
-    ); //store the refresh token in db
-
-    //separating password from the updatedData
-    const { password: hashedPassword, isAdmin, ...rest } = updatedData._doc;
-
-    //not sending users hashed password to frontend
+    );
+    
+    // Separating password from the updatedData - no unused variable
+    const { password: _, isAdmin, ...rest } = updatedData._doc;
+    
     const responsePayload = {
       refreshToken: refreshToken,
       accessToken,
       isAdmin,
       ...rest,
     };
-
+    
     req.user = {
       ...rest,
       isAdmin: validUser.isAdmin,
       isUser: validUser.isUser,
     };
-
-    //the code for the cookie
-    // .cookie("access_token", accessToken, {
-    //   httpOnly: true,
-    //   maxAge: 900000,
-    //   sameSite: "None",
-    //   secure: true,
-    //   domain: "rent-a-ride-two.vercel.app"
-    // }) // 15 minutes
-    // .cookie("refresh_token", refreshToken, {
-    //   httpOnly: true,
-    //   maxAge: 604800000,
-    //   sameSite: "None",
-    //   secure: true,
-    //   domain: "rent-a-ride-two.vercel.app"
-    // })
-    // 7 days
-
+    
     res.status(200).json(responsePayload);
-
     next();
   } catch (error) {
+    console.error('Error in signIn:', error.message);
     next(error);
-    console.log(error);
   }
 };
 
 export const google = async (req, res, next) => {
   try {
     const user = await User.findOne({ email: req.body.email }).lean();
+    
     if (user && !user.isUser) {
-      return next(errorHandler(409, "email already in use as a vendor"));
+      return next(errorHandler(409, "Email already in use as a vendor"));
     }
+    
     if (user) {
-      const { password: hashedPassword, ...rest } = user;
+      // Remove password from user object - no unused variable
+      const { password: _, ...rest } = user;
       const token = Jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN);
-
+      
       res
         .cookie("access_token", token, {
           httpOnly: true,
           expires: expireDate,
-          SameSite: "None",
-          Domain: ".vercel.app",
+          sameSite: "None",
+          secure: true,
+          domain: ".vercel.app",
         })
         .status(200)
         .json(rest);
     } else {
       const generatedPassword =
         Math.random().toString(36).slice(-8) +
-        Math.random().toString(36).slice(-8); //we are generating a random password since there is no password in result
+        Math.random().toString(36).slice(-8);
+      
       const hashedPassword = bcryptjs.hashSync(generatedPassword, 10);
+      
       const newUser = new User({
         profilePicture: req.body.photo,
         password: hashedPassword,
@@ -221,14 +217,15 @@ export const google = async (req, res, next) => {
           Math.random().toString(36).slice(-8),
         email: req.body.email,
         isUser: true,
-        //we cannot set username to req.body.name because other user may also have same name so we generate a random value and concat it to name
-        //36 in toString(36) means random value from 0-9 and a-z
       });
+      
       const savedUser = await newUser.save();
       const userObject = savedUser.toObject();
-
       const token = Jwt.sign({ id: newUser._id }, process.env.ACCESS_TOKEN);
-      const { password: hashedPassword2, ...rest } = userObject;
+      
+      // Remove password from user object - no unused variable
+      const { password: _, ...rest } = userObject;
+      
       res
         .cookie("access_token", token, {
           httpOnly: true,
@@ -241,6 +238,7 @@ export const google = async (req, res, next) => {
         .json(rest);
     }
   } catch (error) {
+    console.error('Error in google auth:', error.message);
     next(error);
   }
 };
