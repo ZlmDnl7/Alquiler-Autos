@@ -8,10 +8,9 @@ import {
   signOut 
 } from "../controllers/userControllers/userController.js";
 
-// Vehicle controller imports (removed unused checkAvailability)
+// Vehicle controller imports
 import { 
   listAllVehicles, 
-  searchCar, 
   showVehicleDetails 
 } from "../controllers/userControllers/userAllVehiclesController.js";
 
