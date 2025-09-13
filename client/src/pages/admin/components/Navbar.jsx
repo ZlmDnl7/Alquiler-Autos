@@ -10,27 +10,24 @@ import { BsChatLeft } from "react-icons/bs";
 import { RiNotification3Line } from "react-icons/ri";
 import { MdKeyboardArrowDown } from "react-icons/md";
 import { TooltipComponent } from "@syncfusion/ej2-react-popups";
-import {  Chat, Notification, UserProfile } from ".";
+import { Chat, Notification, UserProfile } from ".";
 import profiile from "../../../Assets/profile dummy image.png";
 import { useEffect } from "react";
 import PropTypes from "prop-types";
 
 const Navbar = () => {
   const dispatch = useDispatch();
-  const {  chat, notification, userProfile, screenSize } = useSelector(
+  const { chat, notification, userProfile, screenSize } = useSelector(
     (state) => state.adminDashboardSlice
   );
   const { currentUser } = useSelector((state) => state.user);
 
   useEffect(() => {
     const handleResize = () => dispatch(setScreenSize(window.innerWidth));
-
     window.addEventListener("resize", handleResize);
-
     handleResize();
-
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     if (screenSize <= 900) {
@@ -38,20 +35,32 @@ const Navbar = () => {
     } else {
       dispatch(showSidebarOrNot(true));
     }
-  }, [screenSize]);
+  }, [screenSize, dispatch]);
+
+  // Handle keyboard events for profile button
+  const handleProfileKeyDown = (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      dispatch(openPages("userProfile"));
+    }
+  };
 
   const NavButton = ({ title, customFunc, icon, color, dotColor }) => (
     <TooltipComponent content={title} position={"BottomCenter"}>
       <button
         type="button"
         onClick={customFunc}
-        style={{ color, dotColor }}
-        className="relative text-xl p-3  hover:bg-gray-100  rounded-full mb-2"
+        style={{ color }}
+        className="relative text-xl p-3 hover:bg-gray-100 rounded-full mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        aria-label={title}
       >
-        <span
-          style={{ background: dotColor }}
-          className="absolute inline-flex rounded-full right-[8px] top-2  h-2 w-2"
-        ></span>
+        {dotColor && (
+          <span
+            style={{ backgroundColor: dotColor }}
+            className="absolute inline-flex rounded-full right-[8px] top-2 h-2 w-2"
+            aria-hidden="true"
+          />
+        )}
         {icon}
       </button>
     </TooltipComponent>
@@ -60,7 +69,7 @@ const Navbar = () => {
   NavButton.propTypes = {
     title: PropTypes.string.isRequired,
     customFunc: PropTypes.func.isRequired,
-    icon: PropTypes.node, // assuming icon can be any renderable component
+    icon: PropTypes.node,
     color: PropTypes.string,
     dotColor: PropTypes.string,
   };
@@ -75,10 +84,8 @@ const Navbar = () => {
           icon={<AiOutlineMenu />}
         />
       </div>
-
+      
       <div className="flex justify-between">
-       
-
         <NavButton
           title="Chat"
           customFunc={() => dispatch(openPages("chat"))}
@@ -86,7 +93,7 @@ const Navbar = () => {
           dotColor={"cyan"}
           icon={<BsChatLeft />}
         />
-
+        
         <NavButton
           title="Notificación"
           customFunc={() => dispatch(openPages("notification"))}
@@ -94,26 +101,48 @@ const Navbar = () => {
           dotColor={"gold"}
           icon={<RiNotification3Line />}
         />
-                  <TooltipComponent content="perfil" position="BottomCenter">
-          <div
-            className="flex items-center gap-2 cursor-pointer p-1 hover:bg-gray-100 rounded-lg mt-2"
+        
+        <TooltipComponent content="perfil" position="BottomCenter">
+          <button
+            type="button"
+            className="flex items-center gap-2 cursor-pointer p-1 hover:bg-gray-100 rounded-lg mt-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
             onClick={() => dispatch(openPages("userProfile"))}
+            onKeyDown={handleProfileKeyDown}
+            aria-label={`Perfil de usuario: ${currentUser?.username || "Usuario"}`}
           >
-            <img src={profiile} alt="" className="w-4 h-4 rounded-full " />
+            <img 
+              src={profiile} 
+              alt={`Foto de perfil de ${currentUser?.username || "Usuario"}`}
+              className="w-4 h-4 rounded-full"
+            />
             <p>
               <span className="text-[12px] text-gray-400">Hola,</span>{" "}
-              <span className="text-gray-400 font-semi-bold  text-[12px]">
+              <span className="text-gray-400 font-semi-bold text-[12px]">
                 {currentUser?.username || "Usuario"}
               </span>
             </p>
-            <MdKeyboardArrowDown />
-          </div>
+            <MdKeyboardArrowDown aria-hidden="true" />
+          </button>
         </TooltipComponent>
-
         
-        {chat && <div className="relative top-9 right-0"><Chat /></div>}
-        {notification && <div className="relative top-9 right-0"><Notification /></div>}
-        {userProfile && <div className="relative top-9 right-0"><UserProfile /></div>}
+        {/* Dropdown components with proper positioning */}
+        {chat && (
+          <div className="absolute top-full right-0 mt-2 z-50">
+            <Chat />
+          </div>
+        )}
+        
+        {notification && (
+          <div className="absolute top-full right-0 mt-2 z-50">
+            <Notification />
+          </div>
+        )}
+        
+        {userProfile && (
+          <div className="absolute top-full right-0 mt-2 z-50">
+            <UserProfile />
+          </div>
+        )}
       </div>
     </div>
   );
