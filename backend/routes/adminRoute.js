@@ -3,7 +3,6 @@ import express from "express";
 // Authentication and middleware imports
 import { signIn } from "../controllers/authController.js";
 import { signOut } from "../controllers/userControllers/userController.js";
-import { verifyToken } from "../utils/verifyUser.js";
 import { multerUploads } from "../utils/multer.js";
 
 // Admin controller imports
