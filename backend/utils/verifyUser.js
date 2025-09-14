@@ -1,13 +1,10 @@
 import jwt from "jsonwebtoken";
 import { errorHandler } from "./error.js";
 import User from "../models/userModel.js";
-import { refreshToken } from "../controllers/authController.js";
 
 // Helper function to extract tokens from headers
 const extractTokensFromHeaders = (req) => {
-  if (!req.headers.authorization) return { accessToken: null, refreshTokenValue: null };
-  
-  const authHeader = req.headers.authorization.split(" ")[1];
+  const authHeader = req.headers.authorization?.split(" ")[1];
   if (!authHeader) return { accessToken: null, refreshTokenValue: null };
   
   const tokens = authHeader.split(",");
@@ -19,11 +16,9 @@ const extractTokensFromHeaders = (req) => {
 
 // Helper function to extract tokens from cookies
 const extractTokensFromCookies = (req) => {
-  if (!req.cookies) return { accessToken: null, refreshTokenValue: null };
-  
   return {
-    accessToken: req.cookies.access_token,
-    refreshTokenValue: req.cookies.__refresh_fdbfd9LP
+    accessToken: req.cookies?.access_token || null,
+    refreshTokenValue: req.cookies?.__refresh_fdbfd9LP || null
   };
 };
 
@@ -45,33 +40,23 @@ const handleRefreshToken = async (refreshTokenValue, next) => {
   try {
     const decoded = jwt.verify(refreshTokenValue, process.env.REFRESH_TOKEN);
     const user = await User.findById(decoded.id);
-
     if (!user || user.refreshToken !== refreshTokenValue) {
       return next(errorHandler(403, "Invalid refresh token"));
     }
-
     const newAccessToken = jwt.sign(
       { id: user._id },
       process.env.ACCESS_TOKEN,
       { expiresIn: "15m" }
     );
-
     const newRefreshToken = jwt.sign(
       { id: user._id },
       process.env.REFRESH_TOKEN,
       { expiresIn: "7d" }
     );
-
     // Update user's refresh token in database
     user.refreshToken = newRefreshToken;
     await user.save();
-
-    // Set new tokens in response
-    const response = {
-      accessToken: newAccessToken,
-      refreshToken: newRefreshToken
-    };
-
+    
     return { userId: decoded.id, success: true };
   } catch (error) {
     console.log(error);
@@ -98,18 +83,15 @@ export const verifyToken = async (req, res, next) => {
   console.log("📋 Headers:", req.headers);
   console.log("🔑 Authorization:", req.headers.authorization);
   console.log("🍪 Cookies:", req.cookies);
-
   const { accessToken, refreshTokenValue } = getTokens(req);
   
   console.log("🔑 Access Token:", accessToken ? "✅ Presente" : "❌ Ausente");
   console.log("🔑 Refresh Token:", refreshTokenValue ? "✅ Presente" : "❌ Ausente");
-
   // Check if any tokens are available
   if (!accessToken && !refreshTokenValue) {
     console.log("❌ NO TOKENS FOUND");
     return next(errorHandler(403, "bad request no tokens provided"));
   }
-
   // If we have an access token, try to verify it first
   if (accessToken) {
     const accessResult = verifyAccessToken(accessToken, next);
@@ -124,12 +106,10 @@ export const verifyToken = async (req, res, next) => {
       return; // Error already handled in verifyAccessToken
     }
   }
-
   // Handle refresh token scenario (either no access token or expired access token)
   if (!refreshTokenValue) {
     return next(errorHandler(401, "You are not authenticated"));
   }
-
   const refreshResult = await handleRefreshToken(refreshTokenValue, next);
   if (refreshResult && refreshResult.success) {
     req.user = refreshResult.userId;
