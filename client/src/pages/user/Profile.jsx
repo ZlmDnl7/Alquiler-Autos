@@ -1,14 +1,12 @@
 import { useSelector, useDispatch } from "react-redux";
-
 import UserProfileSidebar from "../../components/UserProfileSidebar";
 import { TooltipComponent } from "@syncfusion/ej2-react-popups";
 import { Link, Route, Routes } from "react-router-dom";
 import Orders from "./Orders";
 import UserProfileContent from "../../components/UserProfileContent";
 import Favorites from "./Favorites";
-import { IoArrowBackCircleSharp } from "react-icons/io5";
+import { IoArrowBackCircleSharp, IoMenu } from "react-icons/io5"; // ✅ Corregido: Import combinado
 import { showSidebarOrNot } from "../../redux/adminSlices/adminDashboardSlice/DashboardSlice";
-import { IoMenu } from "react-icons/io5";
 
 function Profile() {
   const { isError } = useSelector((state) => state.user);
@@ -31,8 +29,6 @@ function Profile() {
 
       <div>
         <div className="flex  relative dark:bg-main-dark-bg">
-         
-
           {activeMenu ? (
             <div className="w-72 bg-white  fixed sidebar dark:bg-secondary-dark-bg">
               <UserProfileSidebar />
