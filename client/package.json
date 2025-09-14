@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "mocha src/tests/frontend.test.js",
+    "test:watch": "mocha --watch src/tests/frontend.test.js"
   },
   "dependencies": {
     "@emotion/react": "^11.11.4",
@@ -68,6 +70,11 @@
     "eslint-plugin-react-refresh": "^0.4.5",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
-    "vite": "^5.1.4"
+    "vite": "^5.1.4",
+    "mocha": "^10.2.0",
+    "chai": "^4.3.7",
+    "sinon": "^17.0.1",
+    "jsdom": "^23.0.1",
+    "jsdom-global": "^3.0.2"
   }
 }
