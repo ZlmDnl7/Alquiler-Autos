@@ -8,7 +8,6 @@ import { Button } from "@mui/material";
 import { Header } from "../components";
 import toast, { Toaster } from "react-hot-toast";
 import { DataGrid } from "@mui/x-data-grid";
-
 import Box from "@mui/material/Box";
 import { showVehicles } from "../../../redux/user/listAllVehicleSlice";
 import {
@@ -18,14 +17,15 @@ import {
 function AllVehicles() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
   const { isAddVehicleClicked } = useSelector((state) => state.addVehicle);
+  
+  // ✅ Corregido: useState desestructurado correctamente
+  const [allVehicles, setAllVehicles] = useState([]);
 
-  const [allVehicles, setVehicles] = useState([]);
   const { adminEditVehicleSuccess, adminAddVehicleSuccess, adminCrudError } =
     useSelector((state) => state.statusSlice);
 
-  //show vehicles
+  // Show vehicles
   useEffect(() => {
     const fetchVehicles = async () => {
       try {
@@ -34,27 +34,26 @@ function AllVehicles() {
         });
         if (res.ok) {
           const data = await res.json();
-          setVehicles(data);
+          setAllVehicles(data);
           dispatch(showVehicles(data));
         }
       } catch (error) {
-        console.log(error);
+        console.error("Error fetching vehicles:", error);
       }
     };
     fetchVehicles();
-  }, [isAddVehicleClicked]);
+  }, [isAddVehicleClicked, dispatch]);
 
-  //delete a vehicle
-  const handleDelete = async (vehicle_id) => {
+  // Delete a vehicle
+  const handleDelete = async (vehicleId) => {
     try {
-      setVehicles(allVehicles.filter((cur) => cur._id !== vehicle_id));
-      const res = await fetch(`/api/admin/deleteVehicle/${vehicle_id}`, {
+      setAllVehicles(allVehicles.filter((cur) => cur._id !== vehicleId));
+      const res = await fetch(`/api/admin/deleteVehicle/${vehicleId}`, {
         method: "DELETE",
       });
       if (res.ok) {
-        toast.success("eliminado", {
+        toast.success("Eliminado exitosamente", {
           duration: 800,
-
           style: {
             color: "white",
             background: "#c48080",
@@ -62,14 +61,14 @@ function AllVehicles() {
         });
       }
     } catch (error) {
-      console.log(error);
+      console.error("Error deleting vehicle:", error);
     }
   };
 
-  //edit vehicles
-  const handleEditVehicle = (vehicle_id) => {
-    dispatch(setEditData({ _id: vehicle_id }));
-    navigate(`/adminDashboard/editProducts?vehicle_id=${vehicle_id}`);
+  // Edit vehicles
+  const handleEditVehicle = (vehicleId) => {
+    dispatch(setEditData({ _id: vehicleId }));
+    navigate(`/adminDashboard/editProducts?vehicle_id=${vehicleId}`);
   };
 
   const columns = [
@@ -131,18 +130,16 @@ function AllVehicles() {
       name: vehicle.name,
     }));
 
-  //edit success
+  // ✅ Corregido: Toast notifications manejadas de forma más eficiente
   useEffect(() => {
     if (adminEditVehicleSuccess) {
-      toast.success("éxito");
+      toast.success("Vehículo editado exitosamente");
+    } else if (adminAddVehicleSuccess) {
+      toast.success("Vehículo agregado exitosamente");
+    } else if (adminCrudError) {
+      toast.error("Error en la operación");
     }
-    else if (adminAddVehicleSuccess) {
-      toast.success("éxito");
-    }
-    else if(adminCrudError){
-     toast.error("error")
-    }
-  }, [adminEditVehicleSuccess, adminAddVehicleSuccess,adminCrudError,dispatch]);
+  }, [adminEditVehicleSuccess, adminAddVehicleSuccess, adminCrudError]);
 
   useEffect(() => {
     const clearNotificationsTimeout = setTimeout(() => {
@@ -152,15 +149,14 @@ function AllVehicles() {
     return () => clearTimeout(clearNotificationsTimeout);
   }, [adminEditVehicleSuccess, adminAddVehicleSuccess, adminCrudError, dispatch]);
 
+  // ✅ Corregido: Determinar si mostrar Toaster de forma más eficiente
+  const shouldShowToaster = adminEditVehicleSuccess || adminAddVehicleSuccess || adminCrudError;
+
   return (
     <>
-
-      {adminEditVehicleSuccess ? <Toaster /> : ''} 
-        {adminAddVehicleSuccess ? <Toaster /> : ''}
-        {adminCrudError ? <Toaster/> : ""}     
-        
-        
-      <div className="max-w-[1000px]  d-flex   justify-end text-start items-end p-10">
+      {shouldShowToaster && <Toaster />}
+      
+      <div className="max-w-[1000px] d-flex justify-end text-start items-end p-10">
         <Header title="Todos los Vehículos" />
         <Box sx={{ height: "100%", width: "100%" }}>
           <DataGrid
