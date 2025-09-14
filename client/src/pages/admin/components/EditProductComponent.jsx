@@ -4,7 +4,6 @@ import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import { Controller, useForm } from "react-hook-form";
 import { IoMdClose } from "react-icons/io";
-
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -18,24 +17,22 @@ import { setadminEditVehicleSuccess } from "../../../redux/adminSlices/adminDash
 export default function EditProductComponent() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
   const { register, handleSubmit, control, reset } = useForm();
   const { userAllVehicles } = useSelector((state) => state.userListVehicles);
   const { modelData, companyData, locationData, districtData } = useSelector(
     (state) => state.modelDataSlice
   );
-
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const vehicle_id = queryParams.get("vehicle_id");
-
+  
   let updateingItem = "";
   userAllVehicles.forEach((cur) => {
     if (cur._id === vehicle_id) {
       updateingItem = cur;
     }
   });
-
+  
   const insuranceDefaultDate = updateingItem.insurance_end
     ? dayjs(new Date(updateingItem.insurance_end))
     : null;
@@ -45,7 +42,7 @@ export default function EditProductComponent() {
   const pollutionDefaultDate = updateingItem.pollution_end
     ? dayjs(new Date(updateingItem.pollution_end))
     : null;
-
+    
   const onEditSubmit = async (editData) => {
     let tostID;
     try {
@@ -60,17 +57,14 @@ export default function EditProductComponent() {
           },
           body: JSON.stringify({ formData }),
         });
-
         if(!res.ok){
         toast.error("error");
         toast.dismiss(tostID);
         }
-
         if (res.ok) {
           toast.dismiss(tostID);
           dispatch(setadminEditVehicleSuccess(true))
         }
-
         dispatch(setEditData(null));
       }
       reset();
@@ -79,12 +73,12 @@ export default function EditProductComponent() {
     }
     navigate("/adminDashboard/allProduct");
   };
-
+  
   const handleClose = () => {
     navigate("/adminDashboard/allProduct");
     dispatch(setEditData(null));
   };
-
+  
   return (
     <div>
       <button onClick={handleClose} className="relative left-10 top-5">
@@ -99,9 +93,9 @@ export default function EditProductComponent() {
               "& .MuiTextField-root": {
                 m: 4,
                 width: "25ch",
-                color: "black", // Set text color to black
+                color: "black",
                 "& .MuiOutlinedInput-notchedOutline": {
-                  borderColor: "black", // Set outline color to black
+                  borderColor: "black",
                 },
                 "@media (max-width: 640px)": {
                   width: "30ch",
@@ -119,7 +113,6 @@ export default function EditProductComponent() {
                 {...register("registeration_number")}
                 defaultValue={updateingItem?.registeration_number || ""}
               />
-
               <Controller
                 control={control}
                 name="company"
@@ -133,15 +126,14 @@ export default function EditProductComponent() {
                     label="Company"
                     error={Boolean(field.value == "")}
                   >
-                    {companyData.map((cur, idx) => (
-                      <MenuItem value={cur} key={idx}>
+                    {companyData.map((cur) => (
+                      <MenuItem value={cur} key={cur}>
                         {cur}
                       </MenuItem>
                     ))}
                   </TextField>
                 )}
               ></Controller>
-
               <TextField
                 required
                 id="name"
@@ -163,15 +155,14 @@ export default function EditProductComponent() {
                     label="Model"
                     error={Boolean(field.value == "")}
                   >
-                    {modelData.map((cur, idx) => (
-                      <MenuItem value={cur} key={idx}>
+                    {modelData.map((cur) => (
+                      <MenuItem value={cur} key={cur}>
                         {cur}
                       </MenuItem>
                     ))}
                   </TextField>
                 )}
               ></Controller>
-
               <TextField
                 id="title"
                 label="title"
@@ -191,7 +182,6 @@ export default function EditProductComponent() {
                 {...register("price")}
                 defaultValue={updateingItem?.price || ""}
               />
-
               <TextField
                 required
                 id="year_made"
@@ -213,15 +203,14 @@ export default function EditProductComponent() {
                     label="Fuel type"
                     error={Boolean(field.value == "")}
                   >
-                    <MenuItem value={"petrol"}>petrol</MenuItem>
-                    <MenuItem value={"diesel"}>diesel</MenuItem>
-                    <MenuItem value={"electirc"}>electric</MenuItem>
-                    <MenuItem value={"hybrid"}>hybrid</MenuItem>
+                    <MenuItem value="petrol">petrol</MenuItem>
+                    <MenuItem value="diesel">diesel</MenuItem>
+                    <MenuItem value="electirc">electric</MenuItem>
+                    <MenuItem value="hybrid">hybrid</MenuItem>
                   </TextField>
                 )}
               ></Controller>
             </div>
-
             <div>
               <Controller
                 name="carType"
@@ -234,7 +223,7 @@ export default function EditProductComponent() {
                     id="car_type"
                     select
                     label="Car Type"
-                    error={Boolean(field.value === "")} // Add error handling for empty value
+                    error={Boolean(field.value === "")}
                   >
                     <MenuItem value="sedan">Sedan</MenuItem>
                     <MenuItem value="suv">SUV</MenuItem>
@@ -242,7 +231,6 @@ export default function EditProductComponent() {
                   </TextField>
                 )}
               />
-
               <Controller
                 control={control}
                 name="Seats"
@@ -257,13 +245,12 @@ export default function EditProductComponent() {
                     error={Boolean(field.value === "")}
                     defaultValue={updateingItem.seats}
                   >
-                    <MenuItem value={"5"}>5</MenuItem>
-                    <MenuItem value={"7"}>7</MenuItem>
-                    <MenuItem value={"8"}>8</MenuItem>
+                    <MenuItem value="5">5</MenuItem>
+                    <MenuItem value="7">7</MenuItem>
+                    <MenuItem value="8">8</MenuItem>
                   </TextField>
                 )}
               ></Controller>
-
               <Controller
                 control={control}
                 name="transmitionType"
@@ -277,12 +264,11 @@ export default function EditProductComponent() {
                     label="transmittion_type"
                     error={Boolean(field.value == "")}
                   >
-                    <MenuItem value={"automatic"}>automatic</MenuItem>
-                    <MenuItem value={"manual"}>manual</MenuItem>
+                    <MenuItem value="automatic">automatic</MenuItem>
+                    <MenuItem value="manual">manual</MenuItem>
                   </TextField>
                 )}
               ></Controller>
-
               <Controller
                 control={control}
                 name="vehicleLocation"
@@ -296,15 +282,14 @@ export default function EditProductComponent() {
                     label="vehicleLocation"
                     error={Boolean(field.value == "")}
                   >
-                    {locationData.map((cur, idx) => (
-                      <MenuItem value={cur} key={idx}>
+                    {locationData.map((cur) => (
+                      <MenuItem value={cur} key={cur}>
                         {cur}
                       </MenuItem>
                     ))}
                   </TextField>
                 )}
               ></Controller>
-
               <Controller
                 control={control}
                 name="vehicleDistrict"
@@ -318,15 +303,14 @@ export default function EditProductComponent() {
                     label="vehicleDistrict"
                     error={Boolean(field.value == "")}
                   >
-                    {districtData.map((cur, idx) => (
-                      <MenuItem value={cur} key={idx}>
+                    {districtData.map((cur) => (
+                      <MenuItem value={cur} key={cur}>
                         {cur}
                       </MenuItem>
                     ))}
                   </TextField>
                 )}
               ></Controller>
-
               <TextField
                 id="description"
                 label="description"
@@ -336,7 +320,6 @@ export default function EditProductComponent() {
                 sx={{
                   width: "100%",
                   "@media (min-width: 1280px)": {
-                    // for large screens (lg)
                     minWidth: 565,
                   },
                 }}
@@ -353,15 +336,14 @@ export default function EditProductComponent() {
                     <DatePicker
                       {...field}
                       label="Insurance end Date"
-                      inputFormat="MM/dd/yyyy" // Customize the date format as per your requirement
-                      value={field.value || null} // Ensure value is null if empty string or undefined
+                      inputFormat="MM/dd/yyyy"
+                      value={field.value || null}
                       onChange={(date) => field.onChange(date)}
                       textField={(props) => <TextField {...props} />}
                     />
                   </LocalizationProvider>
                 )}
               />
-
               <Controller
                 control={control}
                 name="Registeration_end_date"
@@ -371,15 +353,14 @@ export default function EditProductComponent() {
                     <DatePicker
                       {...field}
                       label="registeration end Date"
-                      inputFormat="MM/dd/yyyy" // Customize the date format as per your requirement
-                      value={field.value || null} // Ensure value is null if empty string or undefined
+                      inputFormat="MM/dd/yyyy"
+                      value={field.value || null}
                       onChange={(date) => field.onChange(date)}
                       textField={(props) => <TextField {...props} />}
                     />
                   </LocalizationProvider>
                 )}
               ></Controller>
-
               <Controller
                 control={control}
                 name="polution_end_date"
@@ -389,18 +370,14 @@ export default function EditProductComponent() {
                     <DatePicker
                       {...field}
                       label="polution end Date "
-                      inputFormat="MM/dd/yyyy" // Customize the date format as per your requirement
-                      value={field.value || null} // Ensure value is null if empty string or undefined
+                      inputFormat="MM/dd/yyyy"
+                      value={field.value || null}
                       onChange={(date) => field.onChange(date)}
                       textField={(props) => <TextField {...props} />}
                     />
                   </LocalizationProvider>
                 )}
               ></Controller>
-
-              {/* editing for image is not done yet , default value for image is also not done yet */}
-
-              {/* file upload section */}
               <div className="flex flex-col items-start justify-center lg:flex-row gap-10 lg:justify-between lg:items-start   ml-7 mt-10">
                 <div className="max-w-[300px] sm:max-w-[600px]">
                   <label
@@ -418,7 +395,6 @@ export default function EditProductComponent() {
                     {...register("insurance_image")}
                   />
                 </div>
-
                 <div className="max-w-[300px] sm:max-w-[600px]">
                   <label
                     className="block mb-2 text-sm font-medium text-gray-900 "
@@ -451,7 +427,6 @@ export default function EditProductComponent() {
                     {...register("polution_image")}
                   />
                 </div>
-
                 <div className="max-w-[300px] sm:max-w-[600px]">
                   <label
                     className="block mb-2 text-sm font-medium text-gray-900 "
