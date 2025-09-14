@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux"; // ✅ Corregido: Import combinado
 import { IoMdTime } from "react-icons/io";
-import { CiCalendarDate } from "react-icons/ci";
-import { CiLocationOn } from "react-icons/ci";
+// CORREGIDO: Consolidar todas las importaciones de 'react-icons/ci' en una sola línea
+import { CiCalendarDate, CiLocationOn } from "react-icons/ci";
 import UserOrderDetailsModal from "../../components/UserOrderDetailsModal";
 import {
   setIsOrderModalOpen,
@@ -15,7 +15,7 @@ export default function Orders() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const dispatch = useDispatch();
-
+  
   // ✅ Corregido: Logs de debug removidos o mejorados
   const fetchBookings = async () => {
     try {
@@ -38,11 +38,9 @@ export default function Orders() {
           userId: _id,
         }),
       });
-
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
       }
-
       const data = await res.json();
       
       if (data && Array.isArray(data)) {
@@ -86,7 +84,7 @@ export default function Orders() {
           }
         </p>
       </div>
-
+      
       {/* Estado de carga */}
       {loading && (
         <div className="text-center py-20">
@@ -97,7 +95,7 @@ export default function Orders() {
           <p className="text-gray-500">Buscando en la base de datos</p>
         </div>
       )}
-
+      
       {/* Estado de error */}
       {error && !loading && (
         <div className="text-center py-20">
@@ -114,7 +112,7 @@ export default function Orders() {
           </button>
         </div>
       )}
-
+      
       {/* Estado vacío */}
       {!loading && !error && (!bookings || bookings.length === 0) && (
         <div className="text-center py-20">
@@ -131,7 +129,7 @@ export default function Orders() {
           </button>
         </div>
       )}
-
+      
       {/* Lista de reservas */}
       <div className="space-y-6">
         {bookings && bookings.length > 0 && bookings.map((cur) => {
