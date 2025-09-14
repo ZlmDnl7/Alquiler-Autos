@@ -126,28 +126,29 @@ const Modal = ({
 
   return (
     <Portal>
-      <div
+      <button
         ref={backdropRef}
-        className={`fixed inset-0 flex items-center justify-center overflow-hidden bg-black bg-opacity-80 backdrop-blur-md z-[1000] transition-opacity duration-500 ${
+        type="button"
+        className={`fixed inset-0 flex items-center justify-center overflow-hidden bg-black bg-opacity-80 backdrop-blur-md z-[1000] transition-opacity duration-500 border-0 cursor-default ${
           isOpen ? "opacity-100" : "opacity-0"
         }`}
         onClick={checkOutsideAndCloseModal}
         onMouseDown={handleMouseDown}
         onKeyDown={handleBackdropKeyDown}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="modal-title"
-        tabIndex={-1} // Make the backdrop focusable for keyboard events
+        aria-label={isDismissible ? "Cerrar modal haciendo clic fuera" : "Fondo del modal"}
+        tabIndex={-1}
+        style={{ background: 'rgba(0, 0, 0, 0.8)', backdropFilter: 'blur(8px)' }}
       >
-        <div
+        <dialog
           ref={modalRef}
-          className={`relative max-h-screen max-w-[100vw] overflow-auto transition-all duration-500 ease-out ${
+          open={isOpen}
+          className={`relative max-h-screen max-w-[100vw] overflow-auto transition-all duration-500 ease-out bg-transparent border-0 p-0 ${
             isOpen ? "opacity-100" : "opacity-0 pointer-events-none select-none"
           } ${
             toAnimate && (isOpen ? getEnterAnimation(animationEnter) : getExitAnimation(animationExit))
           } ${className}`}
-          role="document"
-          aria-describedby="modal-content"
+          aria-labelledby="modal-title"
+          aria-modal="true"
         >
           {showCloseIcon && (
             <div className="mr-4 mt-4 flex">
@@ -166,11 +167,11 @@ const Modal = ({
               </button>
             </div>
           )}
-          <div id="modal-content" role="main">
+          <main id="modal-content">
             {children}
-          </div>
-        </div>
-      </div>
+          </main>
+        </dialog>
+      </button>
     </Portal>
   );
 };
