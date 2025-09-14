@@ -4,8 +4,8 @@ import SignUp from "./pages/user/SignUp";
 import SignIn from "./pages/user/SignIn";
 import Vehicles from "./pages/user/Vehicles";
 import Profile from "./pages/user/Profile";
-import WithNav from "./components/Layout/WithNav"; // Fixed: PascalCase naming
-import PrivateRoute, { PrivateSignin } from "./components/PrivateRoute"; // Fixed: Consolidated imports
+import WithNav from "./components/Layout/WithNav";
+import PrivateRoute, { PrivateSignin } from "./components/PrivateRoute";
 import AdminPrivateRoutes from "./components/AdminPrivateRoutes";
 import Enterprise from "./pages/user/Enterprise";
 import Contact from "./pages/user/Contact";
@@ -17,7 +17,6 @@ import Layout from "./pages/admin/layouts/Layout";
 import AdminDashNew from "./pages/admin/dashboard/AdminDashNew";
 import VehicleDetails from "./pages/user/VehicleDetails";
 import EditProductComponent from "./pages/admin/components/EditProductComponent";
-import Orders from "./pages/user/Orders";
 import AvailableVehicles from "./pages/user/AvailableVehiclesAfterSearch";
 import VendorEditProductComponent from "./pages/vendor/Components/VendorEditProductComponent";
 import VendorDeleteVehicleModal from "./pages/vendor/Components/VendorDeleteVehicleModal";
