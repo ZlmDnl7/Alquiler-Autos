@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
-import { useDispatch } from "react-redux";
+import { useSelector, useDispatch } from "react-redux"; // ✅ Corregido: Import combinado
 import { IoMdTime } from "react-icons/io";
 import { CiCalendarDate } from "react-icons/ci";
 import { CiLocationOn } from "react-icons/ci";
@@ -12,25 +11,19 @@ import {
 
 export default function Orders() {
   const { _id } = useSelector((state) => state.user.currentUser);
-  const [bookings, setBookings] = useState("");
+  const [bookings, setBookings] = useState([]); // ✅ Corregido: Inicializado como array
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const dispatch = useDispatch();
 
-  console.log("🔍 Orders component renderizado");
-  console.log("👤 Current user:", useSelector((state) => state.user.currentUser));
-  console.log("🆔 User ID:", _id);
-
+  // ✅ Corregido: Logs de debug removidos o mejorados
   const fetchBookings = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      console.log("🔄 Iniciando fetchBookings...");
-      console.log("👤 User ID:", _id);
-      
       if (!_id) {
-        console.log("❌ No hay user ID");
+        console.warn("No user ID available");
         setError("Usuario no autenticado");
         setLoading(false);
         return;
@@ -46,27 +39,20 @@ export default function Orders() {
         }),
       });
 
-      console.log("📡 Respuesta del servidor:", res);
-      console.log("📊 Status:", res.status);
-      console.log("📋 OK:", res.ok);
-
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
       }
 
       const data = await res.json();
-      console.log("📦 Datos recibidos:", data);
-      console.log("📏 Cantidad de reservas:", data?.length);
-
+      
       if (data && Array.isArray(data)) {
         setBookings(data);
-        console.log("✅ Estado actualizado con reservas");
       } else {
-        console.log("❌ Datos no válidos:", data);
+        console.warn("Invalid data received:", data);
         setBookings([]);
       }
     } catch (error) {
-      console.log("💥 Error en fetchBookings:", error);
+      console.error("Error fetching bookings:", error);
       setError(error.message);
       setBookings([]);
     } finally {
@@ -76,7 +62,7 @@ export default function Orders() {
 
   useEffect(() => {
     fetchBookings();
-  }, []);
+  }, [_id]); // ✅ Corregido: Dependencia añadida
 
   const handleDetailsModal = (bookingDetails, vehicleDetails) => {
     dispatch(setIsOrderModalOpen(true));
@@ -148,14 +134,14 @@ export default function Orders() {
 
       {/* Lista de reservas */}
       <div className="space-y-6">
-        {bookings && bookings.length > 0 && bookings.map((cur, idx) => {
+        {bookings && bookings.length > 0 && bookings.map((cur) => {
           const pickupDate = new Date(cur.bookingDetails.pickupDate);
           const dropoffDate = new Date(cur.bookingDetails.dropOffDate);
-
+          
           return (
             <div
               className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 overflow-hidden"
-              key={idx}
+              key={cur.bookingDetails._id} // ✅ Corregido: Key único
             >
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-0">
                 {/* Imagen del vehículo */}
