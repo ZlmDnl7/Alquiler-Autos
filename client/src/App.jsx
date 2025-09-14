@@ -4,9 +4,8 @@ import SignUp from "./pages/user/SignUp";
 import SignIn from "./pages/user/SignIn";
 import Vehicles from "./pages/user/Vehicles";
 import Profile from "./pages/user/Profile";
-import With_nav from "./components/Layout/WithNav";
-import PrivateRoute from "./components/PrivateRoute";
-import { PrivateSignin } from "./components/PrivateRoute";
+import WithNav from "./components/Layout/WithNav"; // Fixed: PascalCase naming
+import PrivateRoute, { PrivateSignin } from "./components/PrivateRoute"; // Fixed: Consolidated imports
 import AdminPrivateRoutes from "./components/AdminPrivateRoutes";
 import Enterprise from "./pages/user/Enterprise";
 import Contact from "./pages/user/Contact";
@@ -37,7 +36,7 @@ function App() {
         <Route path="*" element={<CarNotFound />} />
         
         {/* components with Navbar */}
-        <Route element={<With_nav />}>
+        <Route element={<WithNav />}>
           <Route path="/" element={<Home />} />
           <Route path="/vehicles" element={<Vehicles />} />
           <Route path="/enterprise" element={<Enterprise />} />
