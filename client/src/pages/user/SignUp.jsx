@@ -1,7 +1,6 @@
 import { useState } from "react";
 import styles from "../../index";
 import { Link, useNavigate } from "react-router-dom";
-
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,7 +18,7 @@ const schema = z.object({
     .min(8, { message: "Mínimo 8 caracteres" })
     .regex(/[A-Z]/, { message: "Al menos una mayúscula" })
     .regex(/[a-z]/, { message: "Al menos una minúscula" })
-    .regex(/[0-9]/, { message: "Al menos un número" })
+    .regex(/\d/, { message: "Al menos un número" }) // CORREGIDO: Usar \d en lugar de [0-9]
     .regex(/[^A-Za-z0-9]/, { message: "Al menos un carácter especial" }),
   confirmPassword: z.string()
     .min(1, { message: "Confirma tu contraseña" }),
@@ -34,11 +33,10 @@ function SignUp() {
     handleSubmit,
     formState: { errors },
   } = useForm({ resolver: zodResolver(schema) });
-
   const [isError, setError] = useState(false);
   const [isLoading, setLoading] = useState(false);
   const navigate = useNavigate();
-
+  
   const onSubmit = async (formData, e) => {
     e.preventDefault();
     setLoading(true);
@@ -77,7 +75,6 @@ function SignUp() {
             </div>
           </Link>
         </div>
-
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="flex flex-col gap-5 pt-10 px-5"
@@ -97,7 +94,6 @@ function SignUp() {
               </p>
             )}
           </div>
-
           <div>
             <input
               type="email"
@@ -106,14 +102,12 @@ function SignUp() {
               placeholder="Email"
               {...register("email")}
             />
-
             {errors.email && (
               <p className="text-red-500 text-[8px] pt-1">
                 {errors.email.message}
               </p>
             )}
           </div>
-
           <div>
             <input
               type="password"
@@ -128,7 +122,6 @@ function SignUp() {
               </p>
             )}
           </div>
-
           <div>
             <input
               type="password"
@@ -143,7 +136,6 @@ function SignUp() {
               </p>
             )}
           </div>
-
           <button
             className={`${styles.button}  disabled:bg-slate-500 text-black disabled:text-white`}
             disabled={isLoading}
@@ -163,7 +155,6 @@ function SignUp() {
             </p>
           </div>
         </form>
-
       </div>
     </>
   );
