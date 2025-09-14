@@ -1,19 +1,14 @@
 import { GrSecure } from "react-icons/gr";
 import { useDispatch, useSelector } from "react-redux";
-
-import { FaStar } from "react-icons/fa";
+// CORREGIDO: Consolidar todas las importaciones de 'react-icons/fa' en una sola línea
+import { FaStar, FaCarSide, FaCarAlt, FaBuilding } from "react-icons/fa";
 import { CiCalendarDate } from "react-icons/ci";
 import { GiGearStickPattern } from "react-icons/gi";
-import { FaCarSide } from "react-icons/fa";
 import { MdAirlineSeatReclineExtra } from "react-icons/md";
 import { BsFillFuelPumpFill } from "react-icons/bs";
-
-import { FaCarAlt } from "react-icons/fa";
-import { FaBuilding } from "react-icons/fa";
 import styles from "../..";
 import { IoArrowBackCircleSharp } from "react-icons/io5";
 import { TooltipComponent } from "@syncfusion/ej2-react-popups";
-
 import { Link, useNavigate } from "react-router-dom";
 import { FaIndianRupeeSign } from "react-icons/fa6";
 import { useEffect } from "react";
@@ -24,7 +19,6 @@ const VehicleDetails = () => {
   const { singleVehicleDetail } = useSelector(
     (state) => state.userListVehicles
   );
-
   const dispatch = useDispatch();
   const navigate = useNavigate();
   let refreshToken = localStorage.getItem("refreshToken");
@@ -59,10 +53,8 @@ const VehicleDetails = () => {
       //   },
       //   body: JSON.stringify({
       //     vehicleId,
-
       //   })
       // })
-
       // if(!booked.ok){
       //   dispatch(signOut())
       //   navigate('/signup')
@@ -72,7 +64,6 @@ const VehicleDetails = () => {
       // if(data){
       //   navigate('/checkoutPage')
       // }
-
       navigate("/checkoutPage");
     } catch (error) {
       console.log(error);
@@ -165,12 +156,10 @@ const VehicleDetails = () => {
                 </div>
               </div>
             </div>
-
             <div className="lg:col-span-2 lg:row-span-2 lg:row-end-2 bg-slate-50 px-10 min-h-screen  pb-5 pt-10 ">
               <h1 className="sm: text-2xl font-bold text-gray-900 sm:text-3xl capitalize">
                 {singleVehicleDetail.name}
               </h1>
-
               <div className="mt-3 flex flex-col justify-center items-start select-none flex-wrap  gap-4 font-mono text-[14px]">
                 <div
                   className={`${styles.iconFlex} capitalize border border-slate-200 p-2 rounded-md`}
@@ -245,9 +234,7 @@ const VehicleDetails = () => {
                   Calificación: {singleVehicleDetail.rating || singleVehicleDetail.ratting || 5}
                 </div>
               </div>
-
               <div className="mt-3 flex select-none flex-wrap items-center gap-1"></div>
-
               <div className="mt-10 flex flex-col items-center justify-between space-y-4 border-t border-b py-4 sm:flex-row sm:space-y-0">
                 <div className="flex items-end">
                   <h1 className="text-3xl font-bold flex items-center justify-center">
@@ -256,7 +243,6 @@ const VehicleDetails = () => {
                   </h1>
                   <span className="text-base">/Día</span>
                 </div>
-
                 <button
                   type="button"
                   className="inline-flex items-center justify-center rounded-md border-2 border-transparent bg-gray-900 bg-none px-12 py-3 text-center text-base font-bold text-white transition-all duration-200 ease-in-out focus:shadow hover:bg-gray-800 gap-2"
@@ -270,7 +256,6 @@ const VehicleDetails = () => {
                   Reservar Auto
                 </button>
               </div>
-
               <ul className="mt-8 space-y-2">
                 <li className="flex items-center text-left text-sm font-medium text-gray-600">
                   <svg
@@ -287,7 +272,6 @@ const VehicleDetails = () => {
                   </svg>
                   Envío gratis para productos seleccionados
                 </li>
-
                 <li className="flex items-center text-left text-sm font-medium text-gray-600">
                   <svg
                     className="mr-2 block h-5 w-5 align-middle text-gray-500"
@@ -305,7 +289,6 @@ const VehicleDetails = () => {
                 </li>
               </ul>
             </div>
-
             <div className="lg:col-span-3">
               <div className="border-b border-gray-300">
                 <nav className="flex gap-4">
@@ -319,7 +302,6 @@ const VehicleDetails = () => {
                   </a>
                 </nav>
               </div>
-
               <div className="mt-0 flow-root sm:mt-6">
                 <h1 className=" text-3xl font-bold">
                   {singleVehicleDetail.car_title}
