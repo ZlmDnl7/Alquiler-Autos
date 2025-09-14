@@ -1,5 +1,4 @@
 import { useDispatch, useSelector } from "react-redux";
-import { MdCurrencyRupee } from "react-icons/md";
 import { CiCalendarDate } from "react-icons/ci";
 import { IoMdTime } from "react-icons/io";
 import { MdVerifiedUser } from "react-icons/md";
@@ -7,15 +6,12 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FaIndianRupeeSign } from "react-icons/fa6";
-
 import TextField from "@mui/material/TextField";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { displayRazorpay } from "./Razorpay";
 import { setPageLoading } from "../../redux/user/userSlice";
 import { setisPaymentDone } from "../../redux/user/LatestBookingsSlice";
 import {toast, Toaster} from "sonner";
-// import { toast, Toaster } from "sonner";
 
 export async function sendBookingDetailsEmail(
   toEmail,
@@ -31,13 +27,11 @@ export async function sendBookingDetailsEmail(
       body: JSON.stringify({ toEmail, data: bookingDetails }),
     });
     const response = await sendEamil.json();
-
     if (!response.ok) {
       dispatch(setisPaymentDone(false));
       console.log("something went wrong while sending email");
       return;
     }
-
     return "good";
   } catch (error) {
     console.log(error);
@@ -53,6 +47,47 @@ const schema = z.object({
     }),
 });
 
+const formatVehicleInfo = (singleVehicleDetail) => {
+  const fuelTypeMap = {
+    'petrol': 'Gasolina',
+    'diesel': 'Diésel', 
+    'electirc': 'Eléctrico',
+    'hybrid': 'Híbrido'
+  };
+  
+  const transmissionMap = {
+    'manual': 'Manual',
+    'automatic': 'Automática'
+  };
+  
+  return {
+    fuelType: fuelTypeMap[singleVehicleDetail.fuel_type] || singleVehicleDetail.fuel_type,
+    transmission: transmissionMap[singleVehicleDetail.transmition] || singleVehicleDetail.transmition
+  };
+};
+
+const validateFormData = (data) => {
+  const requiredFields = [
+    'localPickupDateTime', 'localDropoffDateTime', 
+    'localPickupDistrict', 'localPickupLocation',
+    'localDropoffDistrict', 'localDropoffLocation'
+  ];
+  
+  return requiredFields.every(field => data[field]);
+};
+
+const createOrderData = (formData, calculatedTotalPrice, totalPrice, user_id, vehicle_id) => ({
+  user_id,
+  vehicle_id,
+  totalPrice: calculatedTotalPrice > 0 ? calculatedTotalPrice : totalPrice,
+  pickupDate: formData.localPickupDateTime,
+  dropoffDate: formData.localDropoffDateTime,
+  pickup_district: formData.localPickupDistrict,
+  pickup_location: formData.localPickupLocation,
+  dropoff_district: formData.localDropoffDistrict,
+  dropoff_location: formData.localDropoffLocation,
+});
+
 const CheckoutPage = () => {
   const {
     handleSubmit,
@@ -61,46 +96,40 @@ const CheckoutPage = () => {
   } = useForm({
     resolver: zodResolver(schema),
   });
+  
   const navigate = useNavigate();
-
+  
   const {
     pickup_district,
     pickup_location,
     dropoff_location,
-    dropofftime,
     pickupDate,
     dropoffDate,
   } = useSelector((state) => state.bookingDataSlice);
-
-  //latest bookings data taken from redux
+  
   const { data, paymentDone } = useSelector(
     (state) => state.latestBookingsSlice
   );
-
   const currentUser = useSelector((state) => state.user.currentUser);
   const singleVehicleDetail = useSelector(
     (state) => state.userListVehicles.singleVehicleDetail
   );
   const { isPageLoading } = useSelector((state) => state.user);
   const dispatch = useDispatch();
-
-  const { email, phoneNumber, adress } = currentUser;
+  
+  const { email, phoneNumber } = currentUser;
   const { price } = singleVehicleDetail;
-
   const user_id = currentUser._id;
   const vehicle_id = singleVehicleDetail._id;
-
+  
   const start = pickupDate?.humanReadable
     ? new Date(pickupDate?.humanReadable)
     : new Date();
   const end = pickupDate?.humanReadable
     ? new Date(dropoffDate?.humanReadable)
     : new Date();
-
   const diffMilliseconds = end - start;
   const Days = Math.round(diffMilliseconds / (1000 * 3600 * 24));
-
-
 
   // Estado local para los campos del formulario de reserva
   const [localPickupDistrict, setLocalPickupDistrict] = useState(pickup_district || "");
@@ -114,54 +143,45 @@ const CheckoutPage = () => {
 
   // Función para actualizar el estado de Redux cuando cambien los campos
   const updateBookingData = (field, value) => {
-    // Aquí deberías dispatchar la acción para actualizar Redux
     console.log(`Actualizando ${field}:`, value);
   };
 
-              // Función para calcular días y precio total
-            const calculateDaysAndPrice = () => {
-              if (localPickupDateTime && localDropoffDateTime) {
-                const start = new Date(localPickupDateTime);
-                const end = new Date(localDropoffDateTime);
-                const diffTime = Math.abs(end - start);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                return { days: diffDays, totalPrice: price * diffDays + 25 };
-              }
-              return { days: 0, totalPrice: 0 };
-            };
+  // Función para calcular días y precio total
+  const calculateDaysAndPrice = () => {
+    if (localPickupDateTime && localDropoffDateTime) {
+      const start = new Date(localPickupDateTime);
+      const end = new Date(localDropoffDateTime);
+      const diffTime = Math.abs(end - start);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return { days: diffDays, totalPrice: price * diffDays + 25 };
+    }
+    return { days: 0, totalPrice: 0 };
+  };
 
   const { days: calculatedDays, totalPrice: calculatedTotalPrice } = calculateDaysAndPrice();
+  const totalPrice = price * Days + 25;
 
-
-
-              //calculateing total price
-            let totalPrice = price * Days ? Days + 25 : "";
   //handle place order data
   const handlePlaceOrder = async () => {
-    // Validar que todos los campos estén llenos
-    if (!localPickupDateTime || !localDropoffDateTime || !localPickupDistrict || !localPickupLocation || !localDropoffDistrict || !localDropoffLocation) {
+    const formData = {
+      localPickupDateTime,
+      localDropoffDateTime,
+      localPickupDistrict,
+      localPickupLocation,
+      localDropoffDistrict,
+      localDropoffLocation
+    };
+    
+    if (!validateFormData(formData)) {
       toast.error("Por favor completa todos los campos de ubicación y fechas");
       return;
     }
 
-    const orderData = {
-      user_id,
-      vehicle_id,
-      totalPrice: calculatedTotalPrice > 0 ? calculatedTotalPrice : totalPrice,
-      pickupDate: localPickupDateTime,
-      dropoffDate: localDropoffDateTime,
-      pickup_district: localPickupDistrict,
-      pickup_location: localPickupLocation,
-      dropoff_district: localDropoffDistrict,
-      dropoff_location: localDropoffLocation,
-    };
-
+    const orderData = createOrderData(formData, calculatedTotalPrice, totalPrice, user_id, vehicle_id);
     console.log("Datos de la orden:", orderData);
 
     try {
       dispatch(setPageLoading(true));
-      
-      // PRUEBA DIRECTA: Guardar en base de datos sin Razorpay
       console.log("Intentando guardar reserva directamente...");
       
       const response = await fetch("/api/user/bookCar", {
@@ -171,35 +191,18 @@ const CheckoutPage = () => {
         },
         body: JSON.stringify(orderData),
       });
-
       const result = await response.json();
       console.log("Respuesta del backend:", result);
-
+      
       if (response.ok && result) {
         toast.success("¡Reserva creada exitosamente!");
         dispatch(setPageLoading(false));
         setReservationSuccess(true);
         setReservationData(result.booked);
-        // NO redirigir automáticamente - mostrar confirmación
-        // navigate("/");
       } else {
         toast.error(result?.message || "Error al crear la reserva");
         dispatch(setPageLoading(false));
       }
-
-      // Código original comentado para pruebas
-      /*
-      const displayRazorpayResponse = await displayRazorpay(
-        orderData,
-        navigate,
-        dispatch
-      );
-
-      if (!displayRazorpayResponse || !displayRazorpayResponse?.ok) {
-        dispatch(setPageLoading(false));
-        toast.error(displayRazorpayResponse?.message || "Error al procesar el pago");
-      }
-      */
     } catch (error) {
       console.log("Error en handlePlaceOrder:", error);
       dispatch(setPageLoading(false));
@@ -207,15 +210,12 @@ const CheckoutPage = () => {
     }
   };
 
-  //after payment is done in displayRazorpay function we update the paymentDone from false to true our useEffect is triggered whenever state of paymentDone or data changes
-  // 5.call our sendBookingDetails function to call my sendEmailapi with recivers email and his last bookingsData
   useEffect(() => {
     if (paymentDone && data) {
       const sendEmail = async () => {
         await sendBookingDetailsEmail(email, data, dispatch);
         dispatch(setisPaymentDone(false));
       };
-
       sendEmail();
     }
   }, [paymentDone, data, email, dispatch]);
@@ -226,6 +226,8 @@ const CheckoutPage = () => {
       dispatch(setPageLoading(false));
     };
   }, [dispatch]);
+
+  const { fuelType, transmission } = formatVehicleInfo(singleVehicleDetail);
 
   // Mostrar pantalla de confirmación si la reserva fue exitosa
   if (reservationSuccess && reservationData) {
@@ -243,22 +245,18 @@ const CheckoutPage = () => {
         />
         <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-2xl w-full text-center">
-            {/* Icono de éxito */}
             <div className="w-24 h-24 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
               <span className="text-4xl">✅</span>
             </div>
             
-            {/* Título */}
             <h1 className="text-3xl font-bold text-gray-800 mb-4">
               ¡Reserva Confirmada!
             </h1>
             
-            {/* Mensaje */}
             <p className="text-gray-600 text-lg mb-8">
               Tu auto ha sido reservado exitosamente. Revisa los detalles a continuación.
             </p>
             
-            {/* Detalles de la reserva */}
             <div className="bg-gray-50 rounded-2xl p-6 mb-8 text-left">
               <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
                 <span>📋</span>
@@ -302,7 +300,6 @@ const CheckoutPage = () => {
               </div>
             </div>
             
-            {/* Botones de acción */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 onClick={() => navigate("/")}
@@ -322,7 +319,6 @@ const CheckoutPage = () => {
               </button>
             </div>
             
-            {/* Información adicional */}
             <div className="mt-8 p-4 bg-blue-50 rounded-xl border border-blue-200">
               <p className="text-sm text-blue-800">
                 <span className="font-semibold">💡 Nota:</span> Recibirás un email de confirmación con todos los detalles de tu reserva.
@@ -392,22 +388,12 @@ const CheckoutPage = () => {
                     
                     <div className="bg-white rounded-lg p-3 shadow-sm">
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Combustible</p>
-                      <p className="font-semibold text-gray-800">
-                        {singleVehicleDetail.fuel_type === 'petrol' ? 'Gasolina' : 
-                         singleVehicleDetail.fuel_type === 'diesel' ? 'Diésel' : 
-                         singleVehicleDetail.fuel_type === 'electirc' ? 'Eléctrico' : 
-                         singleVehicleDetail.fuel_type === 'hybrid' ? 'Híbrido' : 
-                         singleVehicleDetail.fuel_type}
-                      </p>
+                      <p className="font-semibold text-gray-800">{fuelType}</p>
                     </div>
                     
                     <div className="bg-white rounded-lg p-3 shadow-sm">
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Transmisión</p>
-                      <p className="font-semibold text-gray-800">
-                        {singleVehicleDetail.transmition === 'manual' ? 'Manual' : 
-                         singleVehicleDetail.transmition === 'automatic' ? 'Automática' : 
-                         singleVehicleDetail.transmition}
-                      </p>
+                      <p className="font-semibold text-gray-800">{transmission}</p>
                     </div>
                     
                     <div className="bg-white rounded-lg p-3 shadow-sm">
@@ -471,11 +457,12 @@ const CheckoutPage = () => {
                     
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                        <label htmlFor="pickup-district" className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                           <span className="w-2 h-2 bg-red-500 rounded-full"></span>
                           Ciudad de Recogida *
                         </label>
                         <input
+                          id="pickup-district"
                           type="text"
                           placeholder="Ej: Medellín, Bogotá, Nueva York..."
                           className="w-full px-8 py-5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-200 bg-gray-50 hover:bg-white text-lg"
@@ -488,11 +475,12 @@ const CheckoutPage = () => {
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                        <label htmlFor="pickup-location" className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                           <span className="w-2 h-2 bg-red-500 rounded-full"></span>
                           📍 Punto de Recogida *
                         </label>
                         <input
+                          id="pickup-location"
                           type="text"
                           placeholder="Ej: Centro Comercial Santa Ana, Aeropuerto..."
                           className="w-full px-8 py-5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-200 bg-gray-50 hover:bg-white text-lg"
@@ -505,11 +493,12 @@ const CheckoutPage = () => {
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                        <label htmlFor="pickup-datetime" className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                           <span className="w-2 h-2 bg-red-500 rounded-full"></span>
                           📅 Fecha y Hora de Recogida *
                         </label>
                         <input
+                          id="pickup-datetime"
                           type="datetime-local"
                           className="w-full px-8 py-5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-200 bg-gray-50 hover:bg-white text-lg"
                           value={localPickupDateTime}
@@ -522,7 +511,6 @@ const CheckoutPage = () => {
                       </div>
                     </div>
                   </div>
-
                   {/* Devolución */}
                   <div className="bg-white rounded-2xl p-4 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
                     <div className="flex items-center gap-3 mb-4">
@@ -534,11 +522,12 @@ const CheckoutPage = () => {
                     
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                        <label htmlFor="dropoff-district" className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                           <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
                           Ciudad de Devolución *
                         </label>
                         <input
+                          id="dropoff-district"
                           type="text"
                           placeholder="Ej: Medellín, Bogotá, Nueva York..."
                           className="w-full px-8 py-5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50 hover:bg-white text-lg"
@@ -549,13 +538,13 @@ const CheckoutPage = () => {
                           }}
                         />
                   </div>
-
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                        <label htmlFor="dropoff-location" className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                           <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
                           📍 Punto de Devolución *
                         </label>
                         <input
+                          id="dropoff-location"
                           type="text"
                           placeholder="Ej: Hotel Hilton, Estación Central..."
                           className="w-full px-8 py-5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50 hover:bg-white text-lg"
@@ -568,11 +557,12 @@ const CheckoutPage = () => {
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                        <label htmlFor="dropoff-datetime" className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                           <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
                           📅 Fecha y Hora de Devolución *
                         </label>
                         <input
+                          id="dropoff-datetime"
                           type="datetime-local"
                           className="w-full px-8 py-5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50 hover:bg-white text-lg"
                           value={localDropoffDateTime}
@@ -587,8 +577,6 @@ const CheckoutPage = () => {
                   </div>
                 </div>
               </div>
-
-
               <div className=" rounded-lg flex justify-center items-center gap-2 text-[8px] drop-shadow-md  border border-sm  p-4">
                 <div>
                   <MdVerifiedUser
@@ -606,16 +594,14 @@ const CheckoutPage = () => {
             </div>
           </div>
         </div>
-
         {/* details */}
         <div className="mt-10 bg-gradient-to-br from-gray-50 to-white px-6 pt-8 lg:mt-0 rounded-2xl shadow-xl border border-gray-100">
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-800 mb-2">💳 Detalles de Pago</h2>
+            <h2 className="text-3xl font-bold text-gray-800 mb-2">Detalles de Pago</h2>
             <p className="text-gray-600 text-lg">
               Completa tu orden proporcionando tus datos de contacto
             </p>
           </div>
-
           <form onSubmit={handleSubmit(handlePlaceOrder)}>
             <div className="flex flex-col gap-y-6 my-6">
               {/* Header de contacto */}
@@ -630,7 +616,6 @@ const CheckoutPage = () => {
                   Verifica que tu email esté correcto para recibir la confirmación
                 </p>
               </div>
-
               {/* email */}
               <div className="bg-white rounded-2xl p-4 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
                 <TextField
@@ -639,7 +624,7 @@ const CheckoutPage = () => {
                   variant="outlined"
                   size="medium"
                   className="w-full"
-                  defaultValue={email ? email : ""}
+                  defaultValue={email || ""}
                   {...register("email")}
                   sx={{
                     '& .MuiOutlinedInput-root': {
@@ -659,7 +644,6 @@ const CheckoutPage = () => {
                   </p>
                 )}
               </div>
-
               {/* Información del usuario */}
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-4 border border-blue-200">
                 <div className="flex items-center gap-3 mb-3">
@@ -668,17 +652,15 @@ const CheckoutPage = () => {
                   </div>
                   <h4 className="text-lg font-semibold text-gray-800">Información del Usuario</h4>
               </div>
-
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">Email:</span>
                     <span className="font-semibold text-gray-800">{email || "No configurado"}</span>
               </div>
-
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">Teléfono:</span>
                     <span className="font-semibold text-gray-800">
-                      {phoneNumber ? phoneNumber : "No configurado"}
+                      {phoneNumber || "No configurado"}
                     </span>
                     </div>
                 </div>
@@ -694,12 +676,7 @@ const CheckoutPage = () => {
                   </div>
                 )}
               </div>
-
-
-
-
             </div>
-
             {/* Total */}
             <div className="mt-6 border-t border-b py-2">
               <div className="flex items-center justify-between">
@@ -709,25 +686,23 @@ const CheckoutPage = () => {
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium text-gray-900">Días</p>
                 <p className="font-semibold text-gray-900">
-                  {calculatedDays > 0 ? calculatedDays : Days}
+                  {calculatedDays || Days}
                 </p>
               </div>
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium text-gray-900">Envío</p>
                 <p className="font-semibold text-gray-900">25.00</p>
               </div>
-
             </div>
             <div className="mt-6 flex items-center justify-between">
               <p className="text-sm font-medium text-gray-900">Total</p>
               <p className="text-2xl font-semibold text-gray-900 flex items-center justify-center">
                 <span>
-                  <FaIndianRupeeSign />{" "}
+                  <FaIndianRupeeSign />
                 </span>
-                {calculatedTotalPrice > 0 ? calculatedTotalPrice : totalPrice}
+                {calculatedTotalPrice || totalPrice}
               </p>
             </div>
-
             {isPageLoading ? (
               <div className="space-y-3">
               <button
