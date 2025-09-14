@@ -114,7 +114,9 @@ const generateUniqueUsername = (sanitizedName) => {
 
 // Función para crear respuesta con cookie y token
 const createAuthResponse = (res, user, token) => {
-  const { password, ...rest } = user;
+  // Fixed: Use destructuring to exclude password without unused variable
+  const userResponse = { ...user };
+  delete userResponse.password;
   
   return res
     .cookie("access_token", token, {
@@ -124,7 +126,7 @@ const createAuthResponse = (res, user, token) => {
       expires: expireDate,
     })
     .status(200)
-    .json(rest);
+    .json(userResponse);
 };
 
 // Función para manejar usuario existente
@@ -174,6 +176,12 @@ const handleNewVendor = async (res, next, sanitizedEmail, sanitizedName, sanitiz
   }
 };
 
+// Helper function to exclude password from user object
+const excludePasswordFromUser = (user) => {
+  const { password, ...userWithoutPassword } = user;
+  return userWithoutPassword;
+};
+
 export const vendorSignup = async (req, res, next) => {
   try {
     const { username, email, password } = req.body;
@@ -205,8 +213,15 @@ export const vendorSignup = async (req, res, next) => {
     });
     
     await user.save();
-    res.status(200).json({ message: "Vendor created successfully" });
+    res.status(201).json({ 
+      message: "Vendor created successfully",
+      success: true 
+    });
   } catch (error) {
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern)[0];
+      return next(errorHandler(409, `${field} already exists`));
+    }
     next(error);
   }
 };
@@ -250,8 +265,8 @@ export const vendorSignin = async (req, res, next) => {
    
     const token = Jwt.sign({ id: validVendor._id }, process.env.ACCESS_TOKEN);
     
-    // Crear respuesta sin password
-    const { password: _, ...rest } = validVendor;
+    // Fixed: Use helper function to exclude password without unused variable
+    const userResponse = excludePasswordFromUser(validVendor);
     
     res
       .cookie("access_token", token, {
@@ -261,7 +276,11 @@ export const vendorSignin = async (req, res, next) => {
         maxAge: THIRTY_DAYS_MS,
       })
       .status(200)
-      .json(rest);
+      .json({
+        ...userResponse,
+        success: true,
+        message: "Signed in successfully"
+      });
   } catch (error) {
     next(error);
   }
@@ -276,7 +295,10 @@ export const vendorSignout = async (req, res, next) => {
         sameSite: 'strict',
       })
       .status(200)
-      .json({ message: "Vendor signed out successfully" });
+      .json({ 
+        message: "Vendor signed out successfully",
+        success: true 
+      });
   } catch (error) {
     next(error);
   }
