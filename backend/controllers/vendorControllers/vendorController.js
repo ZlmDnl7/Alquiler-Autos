@@ -29,6 +29,93 @@ const validateString = (input) => {
   return input.toString().trim();
 };
 
+// Función para validar y sanitizar photo URL
+const validateAndSanitizePhoto = (photo) => {
+  if (!photo) {
+    return null;
+  }
+  
+  const photoString = validateString(photo);
+  if (!photoString) {
+    return null;
+  }
+  
+  try {
+    new URL(photoString);
+    return photoString;
+  } catch {
+    return null;
+  }
+};
+
+// Función para generar username único
+const generateUniqueUsername = (sanitizedName) => {
+  const baseUsername = sanitizedName
+    .split(" ")
+    .join("")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+  
+  const randomSuffix = 
+    Math.random().toString(36).slice(-8) +
+    Math.random().toString(36).slice(-8);
+  
+  return baseUsername + randomSuffix;
+};
+
+// Función para crear respuesta con cookie y token
+const createAuthResponse = (res, user, token) => {
+  const { password: _, ...rest } = user;
+  
+  return res
+    .cookie("access_token", token, {
+      httpOnly: true,
+      expires: expireDate,
+    })
+    .status(200)
+    .json(rest);
+};
+
+// Función para manejar usuario existente
+const handleExistingVendor = (res, user) => {
+  const token = Jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN);
+  return createAuthResponse(res, user, token);
+};
+
+// Función para crear nuevo vendor
+const createNewVendor = async (sanitizedEmail, sanitizedName, sanitizedPhoto) => {
+  const generatedPassword =
+    Math.random().toString(36).slice(-8) +
+    Math.random().toString(36).slice(-8);
+  const hashedPassword = bcryptjs.hashSync(generatedPassword, 10);
+  
+  const newUser = new User({
+    profilePicture: sanitizedPhoto,
+    password: hashedPassword,
+    username: generateUniqueUsername(sanitizedName),
+    email: sanitizedEmail,
+    isVendor: true,
+  });
+  
+  return await newUser.save();
+};
+
+// Función para manejar la creación de nuevo vendor
+const handleNewVendor = async (res, next, sanitizedEmail, sanitizedName, sanitizedPhoto) => {
+  try {
+    const savedUser = await createNewVendor(sanitizedEmail, sanitizedName, sanitizedPhoto);
+    const userObject = savedUser.toObject();
+    const token = Jwt.sign({ id: savedUser._id }, process.env.ACCESS_TOKEN);
+    
+    return createAuthResponse(res, userObject, token);
+  } catch (error) {
+    if (error.code === 11000) {
+      return next(errorHandler(409, "email already in use"));
+    }
+    throw error;
+  }
+};
+
 export const vendorSignup = async (req, res, next) => {
   const { username, email, password } = req.body;
   
@@ -120,13 +207,15 @@ export const vendorSignout = async (req, res, next) => {
   }
 };
 
-// vendor login or signup with google
+// vendor login or signup with google - Refactorizada para reducir complejidad
 export const vendorGoogle = async (req, res, next) => {
   try {
     const { email, photo, name } = req.body;
     
-    // Validar y sanitizar email
+    // Validar y sanitizar inputs
     const sanitizedEmail = validateAndSanitizeEmail(email);
+    const sanitizedName = validateString(name);
+    const sanitizedPhoto = validateAndSanitizePhoto(photo);
     
     if (!sanitizedEmail) {
       return next(errorHandler(400, "Invalid email provided"));
@@ -134,88 +223,23 @@ export const vendorGoogle = async (req, res, next) => {
     
     // Usar query object explícito para prevenir NoSQL injection
     const query = { 
-      email: { $eq: sanitizedEmail } // Usar $eq operator explícitamente
+      email: { $eq: sanitizedEmail }
     };
     
     const user = await User.findOne(query).lean();
     
+    // Si el usuario ya existe y es vendor
     if (user?.isVendor) {
-      const { password: _, ...rest } = user;
-      const token = Jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN);
-      res
-        .cookie("access_token", token, {
-          httpOnly: true,
-          expires: expireDate,
-        })
-        .status(200)
-        .json(rest);
-    } else {
-      // Validar name
-      const sanitizedName = validateString(name);
-      
-      if (!sanitizedName) {
-        return next(errorHandler(400, "Invalid name provided"));
-      }
-      
-      // Validar photo URL si se proporciona
-      let sanitizedPhoto = null;
-      if (photo) {
-        const photoString = validateString(photo);
-        // Validar que sea una URL válida
-        try {
-          new URL(photoString);
-          sanitizedPhoto = photoString;
-        } catch {
-          // Si no es una URL válida, usar null
-          sanitizedPhoto = null;
-        }
-      }
-      
-      const generatedPassword =
-        Math.random().toString(36).slice(-8) +
-        Math.random().toString(36).slice(-8);
-      const hashedPassword = bcryptjs.hashSync(generatedPassword, 10);
-      
-      // Generar username único y sanitizado
-      const baseUsername = sanitizedName
-        .split(" ")
-        .join("")
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g, ''); // Remover caracteres especiales
-      
-      const randomSuffix = 
-        Math.random().toString(36).slice(-8) +
-        Math.random().toString(36).slice(-8);
-      
-      const newUser = new User({
-        profilePicture: sanitizedPhoto,
-        password: hashedPassword,
-        username: baseUsername + randomSuffix,
-        email: sanitizedEmail,
-        isVendor: true,
-      });
-      
-      try {
-        const savedUser = await newUser.save();
-        const userObject = savedUser.toObject();
-     
-        const token = Jwt.sign({ id: savedUser._id }, process.env.ACCESS_TOKEN);
-        const { password: _, ...rest } = userObject;
-        
-        res
-          .cookie("access_token", token, {
-            httpOnly: true,
-            expires: expireDate,
-          })
-          .status(200)
-          .json(rest);
-      } catch (error) {
-        if (error.code === 11000) {
-          return next(errorHandler(409, "email already in use"));
-        }
-        next(error);
-      }
+      return handleExistingVendor(res, user);
     }
+    
+    // Si necesita crear nuevo vendor
+    if (!sanitizedName) {
+      return next(errorHandler(400, "Invalid name provided"));
+    }
+    
+    return await handleNewVendor(res, next, sanitizedEmail, sanitizedName, sanitizedPhoto);
+    
   } catch (error) {
     next(error);
   }
