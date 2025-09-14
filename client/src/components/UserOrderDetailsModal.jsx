@@ -7,8 +7,8 @@ const UserOrderDetailsModal = () => {
   );
   const dispatch = useDispatch();
   
-  // Verificación de datos y manejo de errores
-  if (!cur || !cur.bookingDetails || !cur.vehicleDetails) {
+  // Verificación de datos y manejo de errores usando optional chaining
+  if (!cur?.bookingDetails || !cur?.vehicleDetails) {
     return null;
   }
   
@@ -56,16 +56,21 @@ const UserOrderDetailsModal = () => {
   }
   
   return (
-    <div
-      className="fixed inset-0 z-[999] grid h-screen w-screen place-items-center bg-black bg-opacity-60 opacity-100 backdrop-blur-sm transition duration-300 ease-in-out overflow-scroll"
+    <button
+      type="button"
+      className="fixed inset-0 z-[999] grid h-screen w-screen place-items-center bg-black bg-opacity-60 opacity-100 backdrop-blur-sm transition duration-300 ease-in-out overflow-scroll border-0 cursor-default"
       onClick={handleOverlayClick}
       onKeyDown={handleKeyDown}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="modal-title"
+      aria-label="Cerrar modal haciendo clic fuera"
       tabIndex={-1}
+      style={{ background: 'rgba(0, 0, 0, 0.6)', backdropFilter: 'blur(4px)' }}
     >
-      <div className="relative m-4 mx-auto min-w-[300px] md:min-w-[500px] max-w-[40%] rounded-lg bg-white font-sans text-base font-light leading-relaxed text-blue-gray-500 antialiased shadow-2xl">
+      <dialog
+        open={isOrderModalOpen}
+        className="relative m-4 mx-auto min-w-[300px] md:min-w-[500px] max-w-[40%] rounded-lg bg-white font-sans text-base font-light leading-relaxed text-blue-gray-500 antialiased shadow-2xl border-0 p-0"
+        aria-labelledby="modal-title"
+        aria-modal="true"
+      >
         <div className="relative pt-10 p-4 antialiased capitalize font-medium text-[10px] md:text-[16px]">
           <div className="mb-4">
             <div id="modal-title" className="mb-2 font-bold">Booking Details</div>
@@ -152,8 +157,8 @@ const UserOrderDetailsModal = () => {
             Ok
           </button>
         </div>
-      </div>
-    </div>
+      </dialog>
+    </button>
   );
 };
 
