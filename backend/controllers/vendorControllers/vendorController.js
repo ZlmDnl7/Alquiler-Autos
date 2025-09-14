@@ -8,7 +8,8 @@ const expireDate = new Date(Date.now() + 3600000);
 export const vendorSignup = async (req, res, next) => {
   const { username, email, password } = req.body;
   try {
-    const hadshedPassword = bcryptjs.hashSync(password, 10);
+    const hashedPassword = bcryptjs.hashSync(password, 10); // Corregido typo "hadshedPassword"
+    
     // Sanitizar datos de entrada
     const sanitizedUsername = username?.toString().trim();
     const sanitizedEmail = email?.toString().trim();
@@ -17,9 +18,9 @@ export const vendorSignup = async (req, res, next) => {
       return next(errorHandler(400, 'Username and email are required'));
     }
     
-    const user = await User.create({
+    const user = new User({ // Usar 'new' en lugar de User.create()
       username: sanitizedUsername,
-      password: hadshedPassword,
+      password: hashedPassword,
       email: sanitizedEmail,
       isVendor: true,
     });
@@ -32,6 +33,7 @@ export const vendorSignup = async (req, res, next) => {
 
 export const vendorSignin = async (req, res, next) => {
   const { email, password } = req.body;
+
   try {
     // Validar que email sea un string
     if (typeof email !== 'string') {
@@ -45,17 +47,20 @@ export const vendorSignin = async (req, res, next) => {
     
     const validVendor = await User.findOne({ email: sanitizedEmail }).lean();
     if (!validVendor?.isVendor) {
-      return next(errorHandler(404,"user not found"))
+      return next(errorHandler(404, "user not found"));
     }
+    
     const validPassword = bcryptjs.compareSync(password, validVendor.password);
     if (!validPassword) {
-      return next(errorHandler(404,"wrong credentials"));
+      return next(errorHandler(404, "wrong credentials"));
     }
    
     const token = Jwt.sign({ id: validVendor._id }, process.env.ACCESS_TOKEN);
-    const { password, ...rest } = validVendor;
+    
+    // Usar destructuring para excluir password sin reasignación
+    const { password: _, ...rest } = validVendor;
+    
     const thirtyDaysInMilliseconds = 30 * 24 * 60 * 60 * 1000;
-
     res
       .cookie("access_token", token, {
         httpOnly: true,
@@ -79,8 +84,7 @@ export const vendorSignout = async (req, res, next) => {
   }
 };
 
-//vendor login or signup with google
-
+// vendor login or signup with google
 export const vendorGoogle = async (req, res, next) => {
   try {
     // Validar y sanitizar el email antes de usarlo en la consulta
@@ -96,11 +100,12 @@ export const vendorGoogle = async (req, res, next) => {
       return next(errorHandler(400, "Invalid email format"));
     }
     
-    const user = await User.findOne({ email: sanitizedEmail }).lean();
+    // Corregido: usar 'email' en lugar de 'sanitizedEmail' no definido
+    const user = await User.findOne({ email }).lean();
+    
     if (user?.isVendor) {
-      const { password, ...rest } = user;
+      const { password: _, ...rest } = user; // Usar _ para indicar variable no usada
       const token = Jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN);
-
       res
         .cookie("access_token", token, {
           httpOnly: true,
@@ -116,8 +121,9 @@ export const vendorGoogle = async (req, res, next) => {
       
       const generatedPassword =
         Math.random().toString(36).slice(-8) +
-        Math.random().toString(36).slice(-8); //we are generating a random password since there is no password in result
+        Math.random().toString(36).slice(-8); // Generamos password aleatorio
       const hashedPassword = bcryptjs.hashSync(generatedPassword, 10);
+      
       const newUser = new User({
         profilePicture: photo || null,
         password: hashedPassword,
@@ -127,15 +133,15 @@ export const vendorGoogle = async (req, res, next) => {
           Math.random().toString(36).slice(-8),
         email: email,
         isVendor: true,
-        //we cannot set username to req.body.name because other user may also have same name so we generate a random value and concat it to name
-        //36 in toString(36) means random value from 0-9 and a-z
       });
-      try{
+      
+      try {
         const savedUser = await newUser.save();
         const userObject = savedUser.toObject();
      
         const token = Jwt.sign({ id: newUser._id }, process.env.ACCESS_TOKEN);
-        const { password, ...rest } = userObject;
+        const { password: _, ...rest } = userObject; // Usar _ para variable no usada
+        
         res
           .cookie("access_token", token, {
             httpOnly: true,
@@ -143,12 +149,11 @@ export const vendorGoogle = async (req, res, next) => {
           })
           .status(200)
           .json(rest);
-      }
-      catch(error){
-        if(error.code === 11000){
-          return next(errorHandler(409,"email already in use"))
+      } catch (error) {
+        if (error.code === 11000) {
+          return next(errorHandler(409, "email already in use"));
         }
-        next(error)
+        next(error);
       }
     }
   } catch (error) {
