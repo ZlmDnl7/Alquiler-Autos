@@ -2,6 +2,53 @@ import { errorHandler } from "../../utils/error.js";
 import vehicle from "../../models/vehicleModel.js";
 import { uploader } from "../../utils/cloudinaryConfig.js";
 import { base64Converter } from "../../utils/multer.js";
+import mongoose from 'mongoose';
+
+// Función para validar ObjectId de MongoDB
+const validateObjectId = (id, fieldName = 'ID') => {
+  if (!id || typeof id !== 'string') {
+    throw new Error(`Invalid ${fieldName}: must be a non-empty string`);
+  }
+  
+  const trimmedId = id.trim();
+  
+  if (!mongoose.Types.ObjectId.isValid(trimmedId)) {
+    throw new Error(`Invalid ${fieldName}: must be a valid MongoDB ObjectId`);
+  }
+  
+  return trimmedId;
+};
+
+// Función para validar string requerido
+const validateRequiredString = (value, fieldName) => {
+  if (!value || typeof value !== 'string' || !value.trim()) {
+    throw new Error(`${fieldName} is required and must be a non-empty string`);
+  }
+  return value.trim();
+};
+
+// Función para sanitizar datos del formulario
+const sanitizeVehicleData = (data) => {
+  const requiredFields = [
+    'registeration_number', 'company', 'name', 'model', 'title',
+    'base_package', 'price', 'year_made', 'fuel_type', 'description',
+    'seat', 'transmition_type', 'car_type', 'location', 'district'
+  ];
+  
+  const sanitized = {};
+  
+  for (const field of requiredFields) {
+    if (data[field] !== undefined) {
+      if (typeof data[field] === 'string') {
+        sanitized[field] = data[field].trim();
+      } else {
+        sanitized[field] = data[field];
+      }
+    }
+  }
+  
+  return sanitized;
+};
 
 // vendor add vehicle
 export const vendorAddVehicle = async (req, res, next) => {
@@ -16,6 +63,9 @@ export const vendorAddVehicle = async (req, res, next) => {
     if (!req.files || req.files.length === 0) {
       return next(errorHandler(500, "image cannot be empty"));
     }
+
+    // Sanitizar datos de entrada
+    const sanitizedData = sanitizeVehicleData(req.body);
     const {
       registeration_number,
       company,
@@ -36,7 +86,16 @@ export const vendorAddVehicle = async (req, res, next) => {
       location,
       district,
       addedBy,
-    } = req.body;
+    } = sanitizedData;
+
+    // Validar addedBy como ObjectId
+    let validatedAddedBy;
+    try {
+      validatedAddedBy = validateObjectId(addedBy, 'addedBy');
+    } catch (error) {
+      return next(errorHandler(400, error.message));
+    }
+
     const uploadedImages = [];
     if (req.files) {
       //converting the buffer to base64
@@ -80,7 +139,7 @@ export const vendorAddVehicle = async (req, res, next) => {
               location,
               district,
               isAdminAdded: "false",
-              addedBy: addedBy,
+              addedBy: validatedAddedBy,
               isAdminApproved: false,
             });
             await addVehicle.save();
@@ -111,12 +170,21 @@ export const vendorEditVehicles = async (req, res, next) => {
   try {
     //get the id of vehicle to edit through req.params
     const vehicle_id = req.params.id;
-    if (!vehicle_id) {
-      return next(errorHandler(401, "cannot be empty"));
+    
+    // Validar ObjectId del vehículo
+    let validatedVehicleId;
+    try {
+      validatedVehicleId = validateObjectId(vehicle_id, 'Vehicle ID');
+    } catch (error) {
+      return next(errorHandler(400, error.message));
     }
+    
     if (!req.body?.formData) {
       return next(errorHandler(404, "Add data to edit first"));
     }
+
+    // Sanitizar datos del formulario
+    const sanitizedFormData = sanitizeVehicleData(req.body.formData);
     const {
       registeration_number,
       company,
@@ -136,36 +204,45 @@ export const vendorEditVehicles = async (req, res, next) => {
       fuelType,
       vehicleLocation,
       vehicleDistrict,
-    } = req.body.formData;
+    } = sanitizedFormData;
+
     try {
-      const edited = await vehicle.findByIdAndUpdate(
-        vehicle_id,
-        {
-          registeration_number,
-          company,
-          name,
-          model,
-          car_title: title,
-          car_description: description,
-          base_package,
-          price,
-          year_made,
-          fuel_type: fuelType,
-          seats: Seats,
-          transmition: transmitionType,
-          insurance_end: insurance_end_date,
-          registeration_end: Registeration_end_date,
-          pollution_end: polution_end_date,
-          car_type: carType,
-          updated_at: Date.now(),
-          location: vehicleLocation,
-          district: vehicleDistrict,
-          //also resetting adminApproval or rejection when editing data so data request is send again
-          isAdminApproved: false,
-          isRejected: false,
-        },
+      // Usar query object explícito para prevenir NoSQL injection
+      const query = { 
+        _id: { $eq: new mongoose.Types.ObjectId(validatedVehicleId) }
+      };
+
+      const updateData = {
+        registeration_number,
+        company,
+        name,
+        model,
+        car_title: title,
+        car_description: description,
+        base_package,
+        price,
+        year_made,
+        fuel_type: fuelType,
+        seats: Seats,
+        transmition: transmitionType,
+        insurance_end: insurance_end_date,
+        registeration_end: Registeration_end_date,
+        pollution_end: polution_end_date,
+        car_type: carType,
+        updated_at: Date.now(),
+        location: vehicleLocation,
+        district: vehicleDistrict,
+        //also resetting adminApproval or rejection when editing data so data request is send again
+        isAdminApproved: false,
+        isRejected: false,
+      };
+
+      const edited = await vehicle.findOneAndUpdate(
+        query,
+        { $set: updateData },
         { new: true }
       );
+
       if (!edited) {
         return next(errorHandler(404, "data with this id not found"));
       }
@@ -190,24 +267,38 @@ export const vendorEditVehicles = async (req, res, next) => {
   }
 };
 
-//delete vendor Vehcile soft delete
+//delete vendor Vehicle soft delete
 export const vendorDeleteVehicles = async (req, res, next) => {
   try {
     const vehicle_id = req.params.id;
-    // Validar y sanitizar el ID del vehículo
-    if (!vehicle_id || typeof vehicle_id !== 'string') {
-      return next(errorHandler(400, 'Invalid vehicle ID'));
+    
+    // Validar y sanitizar el ID del vehículo usando la función helper
+    let validatedVehicleId;
+    try {
+      validatedVehicleId = validateObjectId(vehicle_id, 'Vehicle ID');
+    } catch (error) {
+      return next(errorHandler(400, error.message));
     }
     
+    // Usar query object explícito para prevenir NoSQL injection
+    const query = { 
+      _id: { $eq: new mongoose.Types.ObjectId(validatedVehicleId) }
+    };
+    
+    const updateData = { 
+      $set: { isDeleted: "true" }
+    };
+    
     const softDeleted = await vehicle.findOneAndUpdate(
-      { _id: vehicle_id },
-      { isDeleted: "true" },
+      query,
+      updateData,
       { new: true }
     );
+
     if (!softDeleted) {
-      next(errorHandler(400, "vehicle not found"));
-      return;
+      return next(errorHandler(400, "vehicle not found"));
     }
+    
     res.status(200).json({ message: "deleted successfully" });
   } catch (error) {
     console.log("Error in vendorDeleteVehicles:", error);
@@ -222,23 +313,30 @@ export const showVendorVehicles = async (req, res, next) => {
       throw errorHandler(400, "User not found");
     }
     const { _id } = req.body;
+    
     // Validar y sanitizar el ID del usuario
-    if (!_id || typeof _id !== 'string') {
-      return next(errorHandler(400, 'Invalid user ID'));
+    let validatedUserId;
+    try {
+      validatedUserId = validateObjectId(_id, 'User ID');
+    } catch (error) {
+      return next(errorHandler(400, error.message));
     }
     
-    const vendorsVehicles = await vehicle.aggregate([
-      {
-        $match: {
-          isDeleted: "false",
-          isAdminAdded: false,
-          addedBy: _id,
-        },
-      },
-    ]);
+    // Usar query object explícito en aggregation pipeline
+    const matchStage = {
+      $match: {
+        isDeleted: { $eq: "false" },
+        isAdminAdded: { $eq: false },
+        addedBy: { $eq: validatedUserId },
+      }
+    };
+    
+    const vendorsVehicles = await vehicle.aggregate([matchStage]);
+    
     if (!vendorsVehicles || vendorsVehicles.length === 0) {
       throw errorHandler(400, "No vehicles found");
     }
+    
     res.status(200).json(vendorsVehicles);
   } catch (error) {
     console.error("Error in showVendorVehicles:", error);
