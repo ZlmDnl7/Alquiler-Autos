@@ -180,8 +180,9 @@ export const vendorSignin = async (req, res, next) => {
    
     const token = Jwt.sign({ id: validVendor._id }, process.env.ACCESS_TOKEN);
     
-    // Usar destructuring para excluir password sin reasignación
-    const { password: _, ...rest } = validVendor;
+    // Crear respuesta sin password usando la función helper
+    const rest = { ...validVendor };
+    delete rest.password;
     
     const thirtyDaysInMilliseconds = 30 * 24 * 60 * 60 * 1000;
     res
