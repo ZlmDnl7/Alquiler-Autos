@@ -9,10 +9,18 @@ export const vendorSignup = async (req, res, next) => {
   const { username, email, password } = req.body;
   try {
     const hadshedPassword = bcryptjs.hashSync(password, 10);
+    // Sanitizar datos de entrada
+    const sanitizedUsername = username?.toString().trim();
+    const sanitizedEmail = email?.toString().trim();
+    
+    if (!sanitizedUsername || !sanitizedEmail) {
+      return next(errorHandler(400, 'Username and email are required'));
+    }
+    
     const user = await User.create({
-      username,
+      username: sanitizedUsername,
       password: hadshedPassword,
-      email,
+      email: sanitizedEmail,
       isVendor: true,
     });
     await user.save();
@@ -30,8 +38,13 @@ export const vendorSignin = async (req, res, next) => {
       return next(errorHandler(400, "Invalid email format"));
     }
     
-    const validVendor = await User.findOne({ email: email }).lean();
-    if (!validVendor || !validVendor.isVendor) {
+    const sanitizedEmail = email?.toString().trim();
+    if (!sanitizedEmail) {
+      return next(errorHandler(400, 'Email is required'));
+    }
+    
+    const validVendor = await User.findOne({ email: sanitizedEmail }).lean();
+    if (!validVendor?.isVendor) {
       return next(errorHandler(404,"user not found"))
     }
     const validPassword = bcryptjs.compareSync(password, validVendor.password);
@@ -40,7 +53,7 @@ export const vendorSignin = async (req, res, next) => {
     }
    
     const token = Jwt.sign({ id: validVendor._id }, process.env.ACCESS_TOKEN);
-    const { password: hadshedPassword, ...rest } = validVendor;
+    const { password, ...rest } = validVendor;
     const thirtyDaysInMilliseconds = 30 * 24 * 60 * 60 * 1000;
 
     res
@@ -83,8 +96,8 @@ export const vendorGoogle = async (req, res, next) => {
       return next(errorHandler(400, "Invalid email format"));
     }
     
-    const user = await User.findOne({ email: email }).lean();
-    if (user && user.isVendor) {
+    const user = await User.findOne({ email: sanitizedEmail }).lean();
+    if (user?.isVendor) {
       const { password, ...rest } = user;
       const token = Jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN);
 
@@ -122,7 +135,7 @@ export const vendorGoogle = async (req, res, next) => {
         const userObject = savedUser.toObject();
      
         const token = Jwt.sign({ id: newUser._id }, process.env.ACCESS_TOKEN);
-        const { password: hashedPassword2, ...rest } = userObject;
+        const { password, ...rest } = userObject;
         res
           .cookie("access_token", token, {
             httpOnly: true,

@@ -2,7 +2,6 @@ import { errorHandler } from "../../utils/error.js";
 import vehicle from "../../models/vehicleModel.js";
 import { uploader } from "../../utils/cloudinaryConfig.js";
 import { base64Converter } from "../../utils/multer.js";
-import Vehicle from "../../models/vehicleModel.js";
 
 // vendor add vehicle
 export const vendorAddVehicle = async (req, res, next) => {
@@ -115,7 +114,7 @@ export const vendorEditVehicles = async (req, res, next) => {
     if (!vehicle_id) {
       return next(errorHandler(401, "cannot be empty"));
     }
-    if (!req.body || !req.body.formData) {
+    if (!req.body?.formData) {
       return next(errorHandler(404, "Add data to edit first"));
     }
     const {
@@ -139,7 +138,7 @@ export const vendorEditVehicles = async (req, res, next) => {
       vehicleDistrict,
     } = req.body.formData;
     try {
-      const edited = await Vehicle.findByIdAndUpdate(
+      const edited = await vehicle.findByIdAndUpdate(
         vehicle_id,
         {
           registeration_number,
@@ -195,6 +194,11 @@ export const vendorEditVehicles = async (req, res, next) => {
 export const vendorDeleteVehicles = async (req, res, next) => {
   try {
     const vehicle_id = req.params.id;
+    // Validar y sanitizar el ID del vehículo
+    if (!vehicle_id || typeof vehicle_id !== 'string') {
+      return next(errorHandler(400, 'Invalid vehicle ID'));
+    }
+    
     const softDeleted = await vehicle.findOneAndUpdate(
       { _id: vehicle_id },
       { isDeleted: "true" },
@@ -218,6 +222,11 @@ export const showVendorVehicles = async (req, res, next) => {
       throw errorHandler(400, "User not found");
     }
     const { _id } = req.body;
+    // Validar y sanitizar el ID del usuario
+    if (!_id || typeof _id !== 'string') {
+      return next(errorHandler(400, 'Invalid user ID'));
+    }
+    
     const vendorsVehicles = await vehicle.aggregate([
       {
         $match: {
