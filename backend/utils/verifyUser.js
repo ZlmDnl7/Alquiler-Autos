@@ -43,11 +43,7 @@ const handleRefreshToken = async (refreshTokenValue, next) => {
     if (!user || user.refreshToken !== refreshTokenValue) {
       return next(errorHandler(403, "Invalid refresh token"));
     }
-    const newAccessToken = jwt.sign(
-      { id: user._id },
-      process.env.ACCESS_TOKEN,
-      { expiresIn: "15m" }
-    );
+    
     const newRefreshToken = jwt.sign(
       { id: user._id },
       process.env.REFRESH_TOKEN,
