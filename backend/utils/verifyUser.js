@@ -107,7 +107,7 @@ export const verifyToken = async (req, res, next) => {
     return next(errorHandler(401, "You are not authenticated"));
   }
   const refreshResult = await handleRefreshToken(refreshTokenValue, next);
-  if (refreshResult && refreshResult.success) {
+  if (refreshResult?.success) {
     req.user = refreshResult.userId;
     next();
   }
