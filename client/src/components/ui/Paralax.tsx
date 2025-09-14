@@ -5,7 +5,6 @@ import {
   useScroll,
   useTransform,
   useSpring,
-  MotionValue,
 } from "framer-motion";
 import { useMediaQuery } from 'react-responsive';
 import PropTypes from 'prop-types';
@@ -58,7 +57,6 @@ export const HeroParallax = () => {
       : translateXReverseDesktop,
     springConfig
   );
-
   const rotateX = useSpring(
     useTransform(scrollYProgress, [0, 0.150], [15, 0]),
     springConfig
