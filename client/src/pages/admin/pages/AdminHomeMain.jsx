@@ -1,7 +1,5 @@
-
-
 import { useState, useEffect } from "react";
-import { LineChart, Button } from "../components";
+import { Button } from "../components";
 import { toast } from "sonner";
 
 const AdminHomeMain = () => {
@@ -33,6 +31,7 @@ const AdminHomeMain = () => {
         toast.error("Error al cargar estadísticas");
       }
     } catch (error) {
+      console.error("Error al obtener estadísticas del dashboard:", error);
       toast.error("Error de conexión");
     } finally {
       setLoading(false);
@@ -58,7 +57,6 @@ const AdminHomeMain = () => {
               <p className="text-2xl text-black">{stats.totalUsers}</p>
             </div>
           </div>
-
           <div className="mt-6">
             <Button
               color="white"
@@ -69,7 +67,6 @@ const AdminHomeMain = () => {
             />
           </div>
         </div>
-
         <div className="flex m-3 flex-wrap  justify-center xl:justify-start  gap-1 items-center ">
           <div className="bg-slate-50 dark:text-gray-200 dark:bg-secondary-dark-bg md:w-56 p-4 pt9 rounded-2xl 2xl:h-44">
             <button
@@ -86,7 +83,6 @@ const AdminHomeMain = () => {
             </p>
             <p className="text-sm text-gray-400 mt-1">Clientes</p>
           </div>
-
           <div className="bg-slate-50 dark:text-gray-200 dark:bg-secondary-dark-bg md:w-56 p-4 pt9 rounded-2xl 2xl:h-44">
             <button
               type="button"
@@ -102,7 +98,6 @@ const AdminHomeMain = () => {
             </p>
             <p className="text-sm text-gray-400 mt-1">Vendedores</p>
           </div>
-
           <div className="bg-slate-50 dark:text-gray-200 dark:bg-secondary-dark-bg md:w-56 p-4 pt9 rounded-2xl 2xl:h-44">
             <button
               type="button"

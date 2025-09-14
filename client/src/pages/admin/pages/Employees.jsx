@@ -31,6 +31,8 @@ const Employees = () => {
         toast.error("Error al cargar empleados");
       }
     } catch (error) {
+      // Corrección: Manejar correctamente la excepción
+      console.error("Error al obtener empleados:", error);
       toast.error("Error de conexión");
     } finally {
       setLoading(false);
