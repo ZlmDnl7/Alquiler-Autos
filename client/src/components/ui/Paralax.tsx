@@ -43,20 +43,23 @@ export const HeroParallax = () => {
   const springConfig = { stiffness: 300, damping: 30, bounce: 100 };
   const isMobile = useMediaQuery({ maxWidth: 500 });
   const isTablet = useMediaQuery({ minWidth: 510, maxWidth: 900 });
-  const isDesktop = useMediaQuery({ minWidth: 901, maxWidth: 1400 });
   
   const translateXReverseMobile = useTransform(scrollYProgress, [0, 0.3], [1000, 70]);
   const translateXTablet = useTransform(scrollYProgress, [0, 0.4], [1000, 300]);
   const translateXReverseDesktop = useTransform(scrollYProgress, [0, 0.4], [1000, 90]);
   
-  const translateX = useSpring(
-    isMobile
-      ? translateXReverseMobile
-      : isTablet
-      ? translateXTablet
-      : translateXReverseDesktop,
-    springConfig
-  );
+  // Extraído el ternario anidado a una declaración independiente
+  let selectedTransform;
+  if (isMobile) {
+    selectedTransform = translateXReverseMobile;
+  } else if (isTablet) {
+    selectedTransform = translateXTablet;
+  } else {
+    selectedTransform = translateXReverseDesktop;
+  }
+  
+  const translateX = useSpring(selectedTransform, springConfig);
+  
   const rotateX = useSpring(
     useTransform(scrollYProgress, [0, 0.150], [15, 0]),
     springConfig
