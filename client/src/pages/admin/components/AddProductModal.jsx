@@ -13,7 +13,6 @@ import {
 } from "../../../redux/adminSlices/adminDashboardSlice/CarModelDataSlice";
 import { MenuItem } from "@mui/material";
 import { setWholeData } from "../../../redux/user/selectRideSlice";
-
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import { IoMdClose } from "react-icons/io";
@@ -32,14 +31,10 @@ export const fetchModelData = async (dispatch) => {
     });
     if (res.ok) {
       const data = await res.json();
-
-      //getting models from data
       const models = data
         .filter((cur) => cur.type === "car")
         .map((cur) => cur.model);
       dispatch(setModelData(models));
-
-      //getting comapnys from data
       const brand = data
         .filter((cur) => cur.type === "car")
         .map((cur) => cur.brand);
@@ -47,14 +42,10 @@ export const fetchModelData = async (dispatch) => {
         return brand.indexOf(cur) === index;
       });
       dispatch(setCompanyData(uniqueBrand));
-
-      //getting locations from data
       const locations = data
         .filter((cur) => cur.type === "location")
         .map((cur) => cur.location);
       dispatch(setLocationData(locations));
-
-      //getting districts from data
       const districts = data
         .filter((cur) => cur.type === "location")
         .map((cur) => cur.district);
@@ -62,8 +53,6 @@ export const fetchModelData = async (dispatch) => {
         return districts.indexOf(cur) === idx;
       });
       dispatch(setDistrictData(uniqueDistricts));
-
-      //setting whole data
       const wholeData = data.filter((cur) => cur.type === "location");
       dispatch(setWholeData(wholeData));
     } else {
@@ -83,24 +72,23 @@ const AddProductModal = () => {
     (state) => state.modelDataSlice
   );
   const {loading} = useSelector(state => state.statusSlice)
-
+  
   useEffect(() => {
     fetchModelData(dispatch);
     dispatch(addVehicleClicked(true))
   }, []);
-
+  
   const onSubmit = async (addData) => {
-   
     try {
       const img = [];
-      for (let i = 0; i < addData.image.length; i++) {
-        img.push(addData.image[i]);
+      for (const file of addData.image) {
+        img.push(file);
       }
       const formData = new FormData();
       formData.append("registeration_number", addData.registeration_number);
       formData.append("company", addData.company);
       img.forEach((file) => {
-        formData.append(`image`, file); // Append each file with a unique key
+        formData.append(`image`, file);
       });
       formData.append("name", addData.name);
       formData.append("model", addData.model);
@@ -120,7 +108,6 @@ const AddProductModal = () => {
       formData.append("district", addData.vehicleDistrict
       );
    
-
       let tostID;
       if (formData) {
         tostID = toast.loading("saving...", { position: "bottom-center" });
@@ -130,7 +117,6 @@ const AddProductModal = () => {
         method: "POST",
         body:formData
       });
-
       if (!res.ok) {
         toast.error("error");
         toast.dismiss(tostID);
@@ -141,7 +127,6 @@ const AddProductModal = () => {
         toast.dismiss(tostID)
         dispatch(setLoading(false))
       }
-
       reset();
     } catch (error) {
       dispatch(setadminCrudError(true))
@@ -150,14 +135,14 @@ const AddProductModal = () => {
     dispatch(addVehicleClicked(false));
     navigate("/adminDashboard/allProduct");
   };
-
+  
   const handleClose = () => {
     navigate("/adminDashboard/allProduct");
   };
-
+  
   return (
     <>
-    {loading  ? <Toaster/> : null }
+      {loading  ? <Toaster/> : null }
       {isAddVehicleClicked && (
         <div>
           <button onClick={handleClose} className="relative left-10 top-5">
@@ -172,9 +157,9 @@ const AddProductModal = () => {
                   "& .MuiTextField-root": {
                     m: 4,
                     width: "25ch",
-                    color: "black", // Set text color to black
+                    color: "black",
                     "& .MuiOutlinedInput-notchedOutline": {
-                      borderColor: "black", // Set outline color to black
+                      borderColor: "black",
                     },
                     "@media (max-width: 640px)": {
                       width: "30ch",
@@ -191,7 +176,6 @@ const AddProductModal = () => {
                     label="registeration_number"
                     {...register("registeration_number")}
                   />
-
                   <Controller
                     control={control}
                     name="company"
@@ -204,22 +188,20 @@ const AddProductModal = () => {
                         label="Compañía"
                         error={Boolean(field.value == "")}
                       >
-                        {companyData.map((cur, idx) => (
-                          <MenuItem value={cur} key={idx}>
+                        {companyData.map((cur) => (
+                          <MenuItem value={cur} key={cur}>
                             {cur}
                           </MenuItem>
                         ))}
                       </TextField>
                     )}
                   ></Controller>
-
                   <TextField
                     required
                     id="name"
                     label="Nombre"
                     {...register("name")}
                   />
-
                   <Controller
                     control={control}
                     name="model"
@@ -232,15 +214,14 @@ const AddProductModal = () => {
                         label="Modelo"
                         error={Boolean(field.value == "")}
                       >
-                        {modelData.map((cur, idx) => (
-                          <MenuItem value={cur} key={idx}>
+                        {modelData.map((cur) => (
+                          <MenuItem value={cur} key={cur}>
                             {cur}
                           </MenuItem>
                         ))}
                       </TextField>
                     )}
                   ></Controller>
-
                   <TextField id="title" label="Título" {...register("title")} />
                   <TextField
                     id="base_package"
@@ -253,7 +234,6 @@ const AddProductModal = () => {
                     label="Precio"
                     {...register("price")}
                   />
-
                   <TextField
                     required
                     id="year_made"
@@ -273,15 +253,14 @@ const AddProductModal = () => {
                         label="Tipo de Combustible"
                         error={Boolean(field.value == "")}
                       >
-                        <MenuItem value={"petrol"}>Gasolina</MenuItem>
-                        <MenuItem value={"diesel"}>Diesel</MenuItem>
-                        <MenuItem value={"electirc"}>Eléctrico</MenuItem>
-                        <MenuItem value={"hybrid"}>Híbrido</MenuItem>
+                        <MenuItem value="petrol">Gasolina</MenuItem>
+                        <MenuItem value="diesel">Diesel</MenuItem>
+                        <MenuItem value="electirc">Eléctrico</MenuItem>
+                        <MenuItem value="hybrid">Híbrido</MenuItem>
                       </TextField>
                     )}
                   ></Controller>
                 </div>
-
                 <div>
                   <Controller
                     name="carType"
@@ -293,7 +272,7 @@ const AddProductModal = () => {
                         id="car_type"
                         select
                         label="Tipo de Auto"
-                        error={Boolean(field.value === "")} // Add error handling for empty value
+                        error={Boolean(field.value === "")}
                       >
                         <MenuItem value="sedan">Sedán</MenuItem>
                         <MenuItem value="suv">SUV</MenuItem>
@@ -301,7 +280,6 @@ const AddProductModal = () => {
                       </TextField>
                     )}
                   />
-
                   <Controller
                     control={control}
                     name="Seats"
@@ -314,13 +292,12 @@ const AddProductModal = () => {
                         label="Seats"
                         error={Boolean(field.value === "")}
                       >
-                        <MenuItem value={"5"}>5</MenuItem>
-                        <MenuItem value={"7"}>7</MenuItem>
-                        <MenuItem value={"8"}>8</MenuItem>
+                        <MenuItem value="5">5</MenuItem>
+                        <MenuItem value="7">7</MenuItem>
+                        <MenuItem value="8">8</MenuItem>
                       </TextField>
                     )}
                   ></Controller>
-
                   <Controller
                     control={control}
                     name="transmitionType"
@@ -333,12 +310,11 @@ const AddProductModal = () => {
                         label="transmittion_type"
                         error={Boolean(field.value == "")}
                       >
-                        <MenuItem value={"automatic"}>automatic</MenuItem>
-                        <MenuItem value={"manual"}>manual</MenuItem>
+                        <MenuItem value="automatic">automatic</MenuItem>
+                        <MenuItem value="manual">manual</MenuItem>
                       </TextField>
                     )}
                   ></Controller>
-
                   <Controller
                     control={control}
                     name="vehicleLocation"
@@ -351,15 +327,14 @@ const AddProductModal = () => {
                         label="vehicleLocation"
                         error={Boolean(field.value == "")}
                       >
-                        {locationData.map((cur, idx) => (
-                          <MenuItem value={cur} key={idx}>
+                        {locationData.map((cur) => (
+                          <MenuItem value={cur} key={cur}>
                             {cur}
                           </MenuItem>
                         ))}
                       </TextField>
                     )}
                   ></Controller>
-
                   <Controller
                     control={control}
                     name="vehicleDistrict"
@@ -372,15 +347,14 @@ const AddProductModal = () => {
                         label="vehicleDistrict"
                         error={Boolean(field.value == "")}
                       >
-                        {districtData.map((cur, idx) => (
-                          <MenuItem value={cur} key={idx}>
+                        {districtData.map((cur) => (
+                          <MenuItem value={cur} key={cur}>
                             {cur}
                           </MenuItem>
                         ))}
                       </TextField>
                     )}
                   ></Controller>
-
                   <TextField
                     id="description"
                     label="description"
@@ -389,7 +363,6 @@ const AddProductModal = () => {
                     sx={{
                       width: "100%",
                       "@media (min-width: 1280px)": {
-                        // for large screens (lg)
                         minWidth: 565,
                       },
                     }}
@@ -405,15 +378,14 @@ const AddProductModal = () => {
                         <DatePicker
                           {...field}
                           label="Fecha de Vencimiento del Seguro"
-                          inputFormat="MM/dd/yyyy" // Customize the date format as per your requirement
-                          value={field.value || null} // Ensure value is null if empty string or undefined
+                          inputFormat="MM/dd/yyyy"
+                          value={field.value || null}
                           onChange={(date) => field.onChange(date)}
                           textField={(props) => <TextField {...props} />}
                         />
                       </LocalizationProvider>
                     )}
                   />
-
                   <Controller
                     control={control}
                     name="Registeration_end_date"
@@ -422,15 +394,14 @@ const AddProductModal = () => {
                         <DatePicker
                           {...field}
                           label="Fecha de Vencimiento del Registro"
-                          inputFormat="MM/dd/yyyy" // Customize the date format as per your requirement
-                          value={field.value || null} // Ensure value is null if empty string or undefined
+                          inputFormat="MM/dd/yyyy"
+                          value={field.value || null}
                           onChange={(date) => field.onChange(date)}
                           textField={(props) => <TextField {...props} />}
                         />
                       </LocalizationProvider>
                     )}
                   ></Controller>
-
                   <Controller
                     control={control}
                     name="polution_end_date"
@@ -439,18 +410,14 @@ const AddProductModal = () => {
                         <DatePicker
                           {...field}
                           label="Fecha de Vencimiento de la Contaminación"
-                          inputFormat="MM/dd/yyyy" // Customize the date format as per your requirement
-                          value={field.value || null} // Ensure value is null if empty string or undefined
+                          inputFormat="MM/dd/yyyy"
+                          value={field.value || null}
                           onChange={(date) => field.onChange(date)}
                           textField={(props) => <TextField {...props} />}
                         />
                       </LocalizationProvider>
                     )}
                   ></Controller>
-
-                  {/* editing for image is not done yet , default value for image is also not done yet */}
-
-                  {/* file upload section */}
                   <div className="flex flex-col items-start justify-center lg:flex-row gap-10 lg:justify-between lg:items-start   ml-7 mt-10">
                     <div className="max-w-[300px] sm:max-w-[600px]">
                       <label
@@ -468,7 +435,6 @@ const AddProductModal = () => {
                         {...register("insurance_image")}
                       />
                     </div>
-
                     <div className="max-w-[300px] sm:max-w-[600px]">
                       <label
                         className="block mb-2 text-sm font-medium text-gray-900 "
@@ -501,7 +467,6 @@ const AddProductModal = () => {
                         {...register("polution_image")}
                       />
                     </div>
-
                     <div className="max-w-[300px] sm:max-w-[600px]">
                       <label
                         className="block mb-2 text-sm font-medium text-gray-900 "
