@@ -1,5 +1,6 @@
 import vehicle from "../../models/vehicleModel.js";
 import { errorHandler } from "../../utils/error.js";
+import Booking from "../../models/BookingModel.js";
 
 //show all vehicles to user
 export const listAllVehicles = async (req, res, next) => {
@@ -90,7 +91,7 @@ export const checkAvailability = async (req, res, next) => {
 //search car filter in homepage
 export const searchCar = async (req, res, next) => {
   try {
-    if (req && req.body) {
+    if (req?.body) {
       const {
         pickup_district,
         pickup_location,

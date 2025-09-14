@@ -21,7 +21,6 @@ export const BookCar = async (req, res, next) => {
       pickup_location,
       dropoff_location,
       pickup_district,
-      dropoff_district,
       razorpayPaymentId,
       razorpayOrderId,
     } = req.body;
@@ -144,7 +143,7 @@ export const getVehiclesWithoutBooking = async (req, res, next) => {
     }
 
     // If there is no next middleware after this one, send the response
-    if (!req.route || !req.route.stack || req.route.stack.length === 1) {
+    if (!req.route?.stack || req.route.stack.length === 1) {
       console.log("hello");
       console.log({ success: "true", data: availableVehicles });
       return res.status(200).json({
@@ -179,6 +178,7 @@ export const showAllVariants = async (req, res, next) => {
 
     res.status(200).json(allVariants);
   } catch (error) {
+    console.error("Error in showAllVariants:", error);
     next(errorHandler(500, "internal error in showAllVariants"));
   }
 };
@@ -416,7 +416,7 @@ export const sendBookingDetailsEamil = (req, res, next) => {
     console.log("hi");
     console.log(req.body);
 
-    var transporter = nodemailer.createTransport({
+    const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
         user: process.env.EMAIL_HOST,
@@ -466,7 +466,7 @@ export const sendBookingDetailsEamil = (req, res, next) => {
       `;
     };
 
-    var mailOptions = {
+    const mailOptions = {
       from: process.env.EMAIL_HOST,
       to: toEmail,
       subject: "rentaride.shop booking details",
