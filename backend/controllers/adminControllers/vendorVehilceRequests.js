@@ -1,84 +1,118 @@
 import Vehicle from "../../models/vehicleModel.js";
 import { errorHandler } from "../../utils/error.js";
 
-//Vendor vehicle request
+// Fetch vendor vehicle requests
 export const fetchVendorVehilceRequests = async (req, res, next) => {
   try {
     const vendorRequests = await Vehicle.aggregate([
       {
         $match: {
           isAdminApproved: false,
-          isDeleted: "false",
+          isDeleted: false, // Changed from string "false" to boolean
           isRejected: false,
           isAdminAdded: false,
         },
       },
     ]);
 
-    if (!vendorRequests) {
-      next(
-        errorHandler(500, "something went wrong while fetching vendor requests")
+    // Check if array is empty instead of falsy
+    if (vendorRequests.length === 0) {
+      return next(
+        errorHandler(404, "No pending vendor requests found")
       );
     }
-    if (vendorRequests) {
-      res.status(200).json(vendorRequests);
-    }
+
+    res.status(200).json({
+      message: "Vendor requests fetched successfully",
+      data: vendorRequests,
+      count: vendorRequests.length
+    });
+
   } catch (error) {
-    console.log(error);
-    next(errorHandler(500, "error while fetchVendorVehicleRequests"));
+    console.error('Error fetching vendor requests:', error.message);
+    next(errorHandler(500, "Error while fetching vendor vehicle requests"));
   }
 };
 
-//approve Vendor reqest
-
+// Approve vendor request
 export const approveVendorVehicleRequest = async (req, res, next) => {
   try {
-    if (!req.body) {
-      next(errorHandler(409, "no body found bad request"));
-    }
-
     const { _id } = req.body;
+
+    // Improved validation
+    if (!_id) {
+      return next(errorHandler(400, "Vehicle ID is required"));
+    }
 
     const approvedVendor = await Vehicle.findByIdAndUpdate(
       _id,
-      { isAdminApproved: true },
+      { 
+        isAdminApproved: true,
+        approvedAt: new Date(),
+        updatedAt: new Date()
+      },
       {
         new: true,
+        runValidators: true
       }
     );
 
     if (!approvedVendor) {
-      next(errorHandler(500, "something went wrong while approveing vendor"));
+      return next(errorHandler(404, "Vehicle request not found"));
     }
 
-    res.status(200).json(approvedVendor);
+    res.status(200).json({
+      message: "Vendor vehicle request approved successfully",
+      data: approvedVendor
+    });
+
   } catch (error) {
-    console.log(error);
-    next(errorHandler(500, "error while approveing vendor"));
+    console.error('Error approving vendor request:', error.message);
+    next(errorHandler(500, "Error while approving vendor request"));
   }
 };
 
-//Regect vendor vehicle
+// Reject vendor vehicle request
 export const rejectVendorVehicleRequest = async (req, res, next) => {
   try {
-    if (!req.body) {
-      next(errorHandler(409, "bad request required id"));
+    const { _id, rejectionReason } = req.body;
+
+    // Improved validation
+    if (!_id) {
+      return next(errorHandler(400, "Vehicle ID is required"));
     }
-    const { _id } = req.body;
-    const regectedVendor = await Vehicle.findByIdAndUpdate(
+
+    const updateData = {
+      isRejected: true,
+      rejectedAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    // Add rejection reason if provided
+    if (rejectionReason) {
+      updateData.rejectionReason = rejectionReason;
+    }
+
+    const rejectedVendor = await Vehicle.findByIdAndUpdate(
       _id,
-      { isRejected: true },
+      updateData,
       {
         new: true,
+        runValidators: true
       }
     );
 
-    if (!regectedVendor) {
-      next(errorHandler(500, "something went wrong while regecting vendor"));
+    if (!rejectedVendor) {
+      return next(errorHandler(404, "Vehicle request not found"));
     }
 
-    res.status(200).json(regectedVendor);
+    res.status(200).json({
+      message: "Vendor vehicle request rejected successfully",
+      data: rejectedVendor
+    });
+
   } catch (error) {
-    next(errorHandler(500, "error while Rejecting"));
+    console.error('Error rejecting vendor request:', error.message);
+    next(errorHandler(500, "Error while rejecting vendor request"));
   }
 };

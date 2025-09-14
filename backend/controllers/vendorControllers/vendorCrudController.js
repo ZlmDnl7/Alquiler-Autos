@@ -1,6 +1,5 @@
 import { errorHandler } from "../../utils/error.js";
 import vehicle from "../../models/vehicleModel.js";
-
 import { uploader } from "../../utils/cloudinaryConfig.js";
 import { base64Converter } from "../../utils/multer.js";
 import Vehicle from "../../models/vehicleModel.js";
@@ -18,7 +17,6 @@ export const vendorAddVehicle = async (req, res, next) => {
     if (!req.files || req.files.length === 0) {
       return next(errorHandler(500, "image cannot be empty"));
     }
-
     const {
       registeration_number,
       company,
@@ -40,13 +38,10 @@ export const vendorAddVehicle = async (req, res, next) => {
       district,
       addedBy,
     } = req.body;
-
     const uploadedImages = [];
-
     if (req.files) {
       //converting the buffer to base64
       const encodedFiles = base64Converter(req);
-
       try {
         //mapping over encoded files and uploading to cloudinary
         await Promise.all(
@@ -57,9 +52,8 @@ export const vendorAddVehicle = async (req, res, next) => {
               });
               uploadedImages.push(result.secure_url);
             } catch (error) {
-              console.log(error, {
-                message: "error while uploading to cloudinary",
-              });
+              console.log("Error uploading individual file to cloudinary:", error);
+              throw error; // Re-throw to be caught by outer catch
             }
           })
         );
@@ -90,7 +84,6 @@ export const vendorAddVehicle = async (req, res, next) => {
               addedBy: addedBy,
               isAdminApproved: false,
             });
-
             await addVehicle.save();
             res.status(200).json({
               message: "product added to mb & cloudninary successfully",
@@ -100,17 +93,17 @@ export const vendorAddVehicle = async (req, res, next) => {
           if (error.code === 11000) {
             return next(errorHandler(409, "product already exists"));
           }
-
-          console.log(error);
+          console.log("Error saving vehicle to database:", error);
           next(errorHandler(500, "product not uploaded"));
         }
       } catch (error) {
-        next(errorHandler(500, "could not upload image to cloudinary"));
+        console.log("Error uploading images to cloudinary:", error);
+        next(errorHandler(500, `could not upload image to cloudinary: ${error.message}`));
       }
     }
   } catch (error) {
-    console.log(error)
-    next(errorHandler(400, "vehicle failed to add "));
+    console.log("General error in vendorAddVehicle:", error);
+    next(errorHandler(400, "vehicle failed to add"));
   }
 };
 
@@ -119,15 +112,12 @@ export const vendorEditVehicles = async (req, res, next) => {
   try {
     //get the id of vehicle to edit through req.params
     const vehicle_id = req.params.id;
-
     if (!vehicle_id) {
       return next(errorHandler(401, "cannot be empty"));
     }
-
     if (!req.body || !req.body.formData) {
       return next(errorHandler(404, "Add data to edit first"));
     }
-
     const {
       registeration_number,
       company,
@@ -148,7 +138,6 @@ export const vendorEditVehicles = async (req, res, next) => {
       vehicleLocation,
       vehicleDistrict,
     } = req.body.formData;
-
     try {
       const edited = await Vehicle.findByIdAndUpdate(
         vehicle_id,
@@ -176,19 +165,16 @@ export const vendorEditVehicles = async (req, res, next) => {
           isAdminApproved: false,
           isRejected: false,
         },
-
         { new: true }
       );
       if (!edited) {
         return next(errorHandler(404, "data with this id not found"));
       }
-
       res.status(200).json(edited);
     } catch (error) {
       if (error.code == 11000 && error.keyPattern && error.keyValue) {
         const duplicateField = Object.keys(error.keyPattern)[0];
         const duplicateValue = error.keyValue[duplicateField];
-
         return next(
           errorHandler(
             409,
@@ -196,9 +182,11 @@ export const vendorEditVehicles = async (req, res, next) => {
           )
         );
       }
+      console.log("Error updating vehicle:", error);
+      next(errorHandler(500, `Error updating vehicle: ${error.message}`));
     }
   } catch (error) {
-    console.log(error);
+    console.log("General error in vendorEditVehicles:", error);
     next(errorHandler(500, "something went wrong"));
   }
 };
@@ -218,8 +206,8 @@ export const vendorDeleteVehicles = async (req, res, next) => {
     }
     res.status(200).json({ message: "deleted successfully" });
   } catch (error) {
-    console.log(error);
-    next(errorHandler(500, "error while vendorDeleteVehilces"));
+    console.log("Error in vendorDeleteVehicles:", error);
+    next(errorHandler(500, "error while vendorDeleteVehicles"));
   }
 };
 
@@ -229,9 +217,7 @@ export const showVendorVehicles = async (req, res, next) => {
     if (!req.body) {
       throw errorHandler(400, "User not found");
     }
-
     const { _id } = req.body;
-
     const vendorsVehicles = await vehicle.aggregate([
       {
         $match: {
@@ -241,14 +227,12 @@ export const showVendorVehicles = async (req, res, next) => {
         },
       },
     ]);
-
     if (!vendorsVehicles || vendorsVehicles.length === 0) {
       throw errorHandler(400, "No vehicles found");
     }
-
     res.status(200).json(vendorsVehicles);
   } catch (error) {
-    console.error(error);
+    console.error("Error in showVendorVehicles:", error);
     next(errorHandler(500, "Error in showVendorVehicles"));
   }
 };

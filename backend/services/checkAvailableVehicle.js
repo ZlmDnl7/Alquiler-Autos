@@ -1,27 +1,26 @@
 import Booking from "../models/BookingModel.js";
 import Vehicle from "../models/vehicleModel.js";
 
-//returning vehicles that are not booked in selected Date
+/**
+ * Returns vehicles that are available for booking in the selected date range
+ * @param {Date} pickupDate - Start date for the booking
+ * @param {Date} dropOffDate - End date for the booking
+ * @returns {Promise<Array>} Array of available vehicles
+ */
 export async function availableAtDate(pickupDate, dropOffDate) {
   try {
-    //this condition only checked vehicles without booking it only checked dates it dose not checked status of trip
+    // Validate input parameters
+    if (!pickupDate || !dropOffDate) {
+      throw new Error("Both pickup and drop-off dates are required");
+    }
 
-    // const existingBookings = await Booking.find({
-    //   $or: [
-    //     { pickupDate: { $lt: dropOffDate }, dropOffDate: { $gt: pickupDate } }, // Overlap condition
-    //     { pickupDate: { $gte: pickupDate, $lt: dropOffDate } }, // Start within range
-    //     { dropOffDate: { $gt: pickupDate, $lte: dropOffDate } }, // End within range
-    //     { pickupDate: { $lte: pickupDate }, dropOffDate: { $gte: dropOffDate } }, // Booking includes the entire time range
-    //   ],
-    // });
+    if (new Date(pickupDate) >= new Date(dropOffDate)) {
+      throw new Error("Drop-off date must be after pickup date");
+    }
 
-    // const vehicleIds = existingBookings.map(booking => booking.vehicleId);
-    // const uniqueVehicleIds = [...new Set(vehicleIds)];
-
-    // const vehiclesWithoutBookings = await Vehicle.find({ _id: { $nin: uniqueVehicleIds } });
-    // return vehiclesWithoutBookings || [];
-
+    // Find existing bookings that overlap with the requested date range
     const existingBookings = await Booking.find({
+      status: { $nin: ["tripCompleted", "canceled", "notBooked"] }, // Only active bookings
       $or: [
         { pickupDate: { $lt: dropOffDate }, dropOffDate: { $gt: pickupDate } }, // Overlap condition
         { pickupDate: { $gte: pickupDate, $lt: dropOffDate } }, // Start within range
@@ -33,37 +32,34 @@ export async function availableAtDate(pickupDate, dropOffDate) {
       ],
     });
 
-    const vehicleIds = existingBookings.map((booking) => booking.vehicleId);
-    const uniqueVehicleIds = [...new Set(vehicleIds)];
+    // Extract unique vehicle IDs that are already booked
+    const bookedVehicleIds = [...new Set(existingBookings.map(booking => booking.vehicleId))];
 
-    // Find vehicles with status "tripCompleted" during the specified date range
-    const vehiclesWithCompletedTrips = await Booking.find(
+    // Find vehicles with completed/canceled trips during the specified date range
+    const availableFromCompletedTrips = await Booking.find(
       {
-        $or: [
-          { status: "tripCompleted" },
-          { status: "canceled" },
-          { status: "notBooked" },
-        ],
+        status: { $in: ["tripCompleted", "canceled", "notBooked"] },
         pickupDate: { $lt: dropOffDate },
         dropOffDate: { $gt: pickupDate },
       },
-      { vehicleId: 1 }
+      { vehicleId: 1, _id: 0 }
     );
 
-    const vehicleIdsWithCompletedTrips = vehiclesWithCompletedTrips.map(
-      (booking) => booking.vehicleId
-    );
+    const availableVehicleIds = availableFromCompletedTrips.map(booking => booking.vehicleId);
 
-    const vehiclesWithoutBookings = await Vehicle.find({
+    // Find all available vehicles
+    const availableVehicles = await Vehicle.find({
+      isDeleted: { $ne: true }, // Exclude deleted vehicles
       $or: [
-        { _id: { $nin: uniqueVehicleIds } }, // Vehicles without bookings
-        { _id: { $in: vehicleIdsWithCompletedTrips } }, // Vehicles with completed trips
+        { _id: { $nin: bookedVehicleIds } }, // Vehicles without active bookings
+        { _id: { $in: availableVehicleIds } }, // Vehicles with completed/canceled trips
       ],
-    });
+    }).lean(); // Use lean() for better performance
 
-    return vehiclesWithoutBookings || [];
+    return availableVehicles;
+
   } catch (error) {
-    console.log(error);
-    throw error;
+    console.error('Error in availableAtDate:', error.message);
+    throw new Error(`Failed to fetch available vehicles: ${error.message}`);
   }
 }
