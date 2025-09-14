@@ -109,8 +109,6 @@ const Navbar = () => {
             onClick={() => dispatch(openPages("userProfile"))}
             onKeyDown={handleProfileKeyDown}
             aria-label={`Perfil de usuario: ${currentUser?.username || "Usuario"}`}
-            role="button"
-            tabIndex={0}
           >
             <img 
               src={profiile} 

@@ -13,12 +13,24 @@ export const adminAuth = async (req,res,next)=> {
     }
 }
 
-export const adminProfiile = async (req,res,next)=> {
-    try{
-
-    }
-    catch(error){
-        next(error)
+export const adminProfile = async (req, res, next) => {
+    try {
+        // Obtener la información del perfil del administrador desde req.user
+        const { _id, name, email, isAdmin, createdAt } = req.user;
+        
+        // Devolver la información del perfil (sin datos sensibles)
+        res.status(200).json({
+            success: true,
+            user: {
+                id: _id,
+                name,
+                email,
+                isAdmin,
+                memberSince: createdAt
+            }
+        });
+    } catch (error) {
+        next(error);
     }
 }
 
