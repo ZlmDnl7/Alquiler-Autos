@@ -4,12 +4,8 @@
 // Archivo: backend/tests/backend.test.js
 // Descripción: Pruebas unitarias para todas las funcionalidades del backend
 // =====================================================
-
 // Importar módulos necesarios para las pruebas
 import { expect } from 'chai';
-import sinon from 'sinon';
-import bcryptjs from 'bcryptjs';
-import Jwt from 'jsonwebtoken';
 
 // =====================================================
 // CASO DE PRUEBA TC-01: REGISTRO DE USUARIO
@@ -40,7 +36,6 @@ describe('TC-01: Registro de Usuario', () => {
     expect(mockUser.isUser).to.be.true;
     expect(mockUser._id).to.exist;
   });
-
   it('debería rechazar registro con email duplicado', () => {
     // Arrange
     const existingEmail = 'usuario_existente@example.com';
@@ -59,7 +54,6 @@ describe('TC-01: Registro de Usuario', () => {
       }
     }).to.throw('El email ya está registrado');
   });
-
   it('debería rechazar registro con nombre de usuario duplicado', () => {
     // Arrange
     const existingUsername = 'usuario_existente';
@@ -78,7 +72,6 @@ describe('TC-01: Registro de Usuario', () => {
       }
     }).to.throw('El nombre de usuario ya está en uso');
   });
-
   it('debería validar contraseña segura', () => {
     // Arrange
     const validPassword = 'Password123!';
@@ -88,13 +81,12 @@ describe('TC-01: Registro de Usuario', () => {
     expect(validPassword.length).to.be.greaterThan(7);
     expect(validPassword).to.match(/[A-Z]/); // Mayúscula
     expect(validPassword).to.match(/[a-z]/); // Minúscula
-    expect(validPassword).to.match(/[0-9]/); // Número
+    expect(validPassword).to.match(/\d/); // Número
     expect(validPassword).to.match(/[!@#$%^&*]/); // Caracter especial
     
     expect(invalidPassword.length).to.be.lessThan(8);
   });
 });
-
 // =====================================================
 // CASO DE PRUEBA TC-02: BÚSQUEDA DE VEHÍCULOS
 // =====================================================
@@ -102,13 +94,6 @@ describe('TC-02: Búsqueda de Vehículos', () => {
   
   it('debería buscar vehículos por ubicación', () => {
     // Arrange
-    const searchCriteria = {
-      location: 'Bogotá',
-      pickupDate: '2025-01-15',
-      dropOffDate: '2025-01-20',
-      vehicleType: 'sedan'
-    };
-    
     // Act - Simular resultados de búsqueda
     const mockVehicles = [
       { id: '1', location: 'Bogotá', type: 'sedan', available: true },
@@ -123,7 +108,6 @@ describe('TC-02: Búsqueda de Vehículos', () => {
       expect(vehicle.available).to.be.true;
     });
   });
-
   it('debería filtrar vehículos por precio', () => {
     // Arrange
     const maxPrice = 100000;
@@ -143,15 +127,7 @@ describe('TC-02: Búsqueda de Vehículos', () => {
       expect(vehicle.price).to.be.lessThan.or.equal(maxPrice);
     });
   });
-
   it('debería mostrar mensaje cuando no hay vehículos disponibles', () => {
-    // Arrange
-    const searchCriteria = {
-      location: 'CiudadRemota',
-      pickupDate: '2025-01-15',
-      dropOffDate: '2025-01-20'
-    };
-    
     // Act - Simular búsqueda sin resultados
     const mockVehicles = [];
     
@@ -160,7 +136,6 @@ describe('TC-02: Búsqueda de Vehículos', () => {
     expect(mockVehicles.length === 0).to.be.true;
   });
 });
-
 // =====================================================
 // CASO DE PRUEBA TC-03: RESERVA DE VEHÍCULOS
 // =====================================================
@@ -193,7 +168,6 @@ describe('TC-03: Reserva de Vehículos', () => {
     expect(mockBooking.totalPrice).to.equal(150000);
     expect(mockBooking.createdAt).to.be.instanceOf(Date);
   });
-
   it('debería validar fechas de reserva', () => {
     // Arrange
     const pickupDate = new Date('2025-01-15');
@@ -205,7 +179,6 @@ describe('TC-03: Reserva de Vehículos', () => {
     expect(dropOffDate).to.be.greaterThan(pickupDate);
     expect(dropOffDate.getTime() - pickupDate.getTime()).to.be.greaterThan(0);
   });
-
   it('debería verificar disponibilidad del vehículo', () => {
     // Arrange
     const vehicleId = '507f1f77bcf86cd799439011';
@@ -222,7 +195,6 @@ describe('TC-03: Reserva de Vehículos', () => {
     expect(mockVehicle.status).to.equal('disponible');
   });
 });
-
 // =====================================================
 // CASO DE PRUEBA TC-04: PROCESO DE PAGO CON RAZORPAY
 // =====================================================
@@ -252,7 +224,6 @@ describe('TC-04: Proceso de Pago con Razorpay', () => {
     expect(mockPayment.currency).to.equal('COP');
     expect(mockPayment.orderId).to.equal('order_123456');
   });
-
   it('debería manejar pago rechazado', () => {
     // Arrange
     const failedPaymentData = {
@@ -275,7 +246,6 @@ describe('TC-04: Proceso de Pago con Razorpay', () => {
     expect(mockFailedPayment.errorCode).to.equal('PAYMENT_DECLINED');
     expect(mockFailedPayment.errorMessage).to.exist;
   });
-
   it('debería validar monto del pago', () => {
     // Arrange
     const validAmount = 150000;
@@ -287,16 +257,12 @@ describe('TC-04: Proceso de Pago con Razorpay', () => {
     expect(validAmount).to.be.a('number');
   });
 });
-
 // =====================================================
 // CASO DE PRUEBA TC-05: HISTORIAL DE RESERVAS
 // =====================================================
 describe('TC-05: Historial de Reservas', () => {
   
   it('debería mostrar reservas del usuario', () => {
-    // Arrange
-    const userId = '507f1f77bcf86cd799439012';
-    
     // Act - Simular historial de reservas
     const mockBookings = [
       {
@@ -320,7 +286,6 @@ describe('TC-05: Historial de Reservas', () => {
     expect(mockBookings[0].status).to.equal('viajeCompletado');
     expect(mockBookings[1].status).to.equal('reservado');
   });
-
   it('debería filtrar reservas por estado', () => {
     // Arrange
     const statusFilter = 'reservado';
@@ -340,11 +305,7 @@ describe('TC-05: Historial de Reservas', () => {
       expect(booking.status).to.equal('reservado');
     });
   });
-
   it('debería mostrar mensaje cuando no hay reservas', () => {
-    // Arrange
-    const userId = 'user_sin_reservas';
-    
     // Act - Simular usuario sin reservas
     const mockBookings = [];
     
@@ -353,16 +314,12 @@ describe('TC-05: Historial de Reservas', () => {
     expect(mockBookings.length === 0).to.be.true;
   });
 });
-
 // =====================================================
 // CASO DE PRUEBA TC-06: GESTIÓN DE RESERVAS (ADMIN)
 // =====================================================
 describe('TC-06: Gestión de Reservas (Administrador)', () => {
   
   it('debería mostrar todas las reservas del sistema', () => {
-    // Arrange
-    const adminId = 'admin_123';
-    
     // Act - Simular todas las reservas del sistema
     const mockAllBookings = [
       { id: '1', userId: 'user_1', status: 'reservado' },
@@ -374,7 +331,6 @@ describe('TC-06: Gestión de Reservas (Administrador)', () => {
     expect(mockAllBookings).to.have.length(3);
     expect(mockAllBookings).to.be.an('array');
   });
-
   it('debería permitir modificar estado de reserva', () => {
     // Arrange
     const bookingId = 'booking_123';
@@ -391,7 +347,6 @@ describe('TC-06: Gestión de Reservas (Administrador)', () => {
     expect(mockUpdatedBooking.status).to.equal('enViaje');
     expect(mockUpdatedBooking.updatedAt).to.be.instanceOf(Date);
   });
-
   it('debería permitir eliminar reserva', () => {
     // Arrange
     const bookingId = 'booking_123';
@@ -408,7 +363,6 @@ describe('TC-06: Gestión de Reservas (Administrador)', () => {
     expect(mockDeletedBooking.deletedAt).to.be.instanceOf(Date);
   });
 });
-
 // =====================================================
 // CASO DE PRUEBA TC-07: AGREGAR VEHÍCULOS (VENDEDOR)
 // =====================================================
@@ -443,7 +397,6 @@ describe('TC-07: Agregar Vehículos (Vendedor)', () => {
     expect(mockVehicle.status).to.equal('pending');
     expect(mockVehicle.vendorId).to.equal('vendor_123');
   });
-
   it('debería validar campos obligatorios', () => {
     // Arrange
     const requiredFields = ['registeration_number', 'company', 'name', 'price'];
@@ -462,7 +415,6 @@ describe('TC-07: Agregar Vehículos (Vendedor)', () => {
       expect(mockVehicle[field]).to.not.be.undefined;
     });
   });
-
   it('debería manejar carga de imágenes', () => {
     // Arrange
     const imageFiles = [
@@ -487,7 +439,6 @@ describe('TC-07: Agregar Vehículos (Vendedor)', () => {
     });
   });
 });
-
 // =====================================================
 // CASO DE PRUEBA TC-08: APROBACIÓN DE VEHÍCULOS (ADMIN)
 // =====================================================
@@ -511,7 +462,6 @@ describe('TC-08: Aprobación de Vehículos (Administrador)', () => {
     expect(mockApprovedVehicle.approvedBy).to.equal('admin_123');
     expect(mockApprovedVehicle.isVisible).to.be.true;
   });
-
   it('debería rechazar vehículo con razón', () => {
     // Arrange
     const vehicleId = 'vehicle_123';
@@ -531,7 +481,6 @@ describe('TC-08: Aprobación de Vehículos (Administrador)', () => {
     expect(mockRejectedVehicle.rejectionReason).to.equal('Imágenes de baja calidad');
     expect(mockRejectedVehicle.rejectedBy).to.equal('admin_123');
   });
-
   it('debería verificar criterios de calidad', () => {
     // Arrange
     const qualityCriteria = {
@@ -548,7 +497,6 @@ describe('TC-08: Aprobación de Vehículos (Administrador)', () => {
     expect(qualityCriteria.meetsStandards).to.be.true;
   });
 });
-
 // =====================================================
 // CASO DE PRUEBA TC-09: ELIMINACIÓN DE VEHÍCULOS (ADMIN)
 // =====================================================
@@ -572,7 +520,6 @@ describe('TC-09: Eliminación de Vehículos (Administrador)', () => {
     expect(mockDeletedVehicle.deletedBy).to.equal('admin_123');
     expect(mockDeletedVehicle.isVisible).to.be.false;
   });
-
   it('debería confirmar eliminación antes de proceder', () => {
     // Arrange
     const confirmationRequired = true;
@@ -580,7 +527,6 @@ describe('TC-09: Eliminación de Vehículos (Administrador)', () => {
     // Act & Assert
     expect(confirmationRequired).to.be.true;
   });
-
   it('debería notificar al vendedor sobre la eliminación', () => {
     // Arrange
     const vendorId = 'vendor_123';
@@ -600,16 +546,12 @@ describe('TC-09: Eliminación de Vehículos (Administrador)', () => {
     expect(mockNotification.message).to.exist;
   });
 });
-
 // =====================================================
 // CASO DE PRUEBA TC-10: GESTIÓN DE USUARIOS (ADMIN)
 // =====================================================
 describe('TC-10: Gestión de Usuarios (Administrador)', () => {
   
   it('debería mostrar lista de usuarios', () => {
-    // Arrange
-    const adminId = 'admin_123';
-    
     // Act - Simular lista de usuarios
     const mockUsers = [
       { id: 'user_1', username: 'usuario1', email: 'user1@example.com', isActive: true },
@@ -622,7 +564,6 @@ describe('TC-10: Gestión de Usuarios (Administrador)', () => {
     expect(mockUsers[0].isActive).to.be.true;
     expect(mockUsers[2].isActive).to.be.false;
   });
-
   it('debería permitir editar usuario', () => {
     // Arrange
     const userId = 'user_123';
@@ -643,7 +584,6 @@ describe('TC-10: Gestión de Usuarios (Administrador)', () => {
     expect(mockUpdatedUser.email).to.equal('updated@example.com');
     expect(mockUpdatedUser.updatedAt).to.be.instanceOf(Date);
   });
-
   it('debería permitir eliminar usuario', () => {
     // Arrange
     const userId = 'user_123';
@@ -661,7 +601,6 @@ describe('TC-10: Gestión de Usuarios (Administrador)', () => {
     expect(mockDeletedUser.deletedBy).to.equal('admin_123');
   });
 });
-
 // =====================================================
 // CASO DE PRUEBA TC-11: CONSULTA DE RESERVAS PASADAS
 // =====================================================
@@ -669,7 +608,6 @@ describe('TC-11: Consulta de Reservas Pasadas', () => {
   
   it('debería mostrar reservas pasadas del usuario', () => {
     // Arrange
-    const userId = 'user_123';
     const currentDate = new Date();
     
     // Act - Simular reservas pasadas
@@ -697,7 +635,6 @@ describe('TC-11: Consulta de Reservas Pasadas', () => {
       expect(booking.status).to.equal('viajeCompletado');
     });
   });
-
   it('debería filtrar por fechas específicas', () => {
     // Arrange
     const startDate = new Date('2024-11-01');
@@ -719,7 +656,6 @@ describe('TC-11: Consulta de Reservas Pasadas', () => {
     expect(booking.pickupDate).to.be.below(endDate);
   });
 });
-
 // =====================================================
 // CASO DE PRUEBA TC-12: AGREGAR VEHÍCULOS (VENDEDOR)
 // =====================================================
@@ -754,7 +690,6 @@ describe('TC-12: Agregar Vehículos (Vendedor)', () => {
     expect(mockCompleteVehicle.transmition).to.equal('manual');
     expect(mockCompleteVehicle.status).to.equal('pending');
   });
-
   it('debería validar campos obligatorios', () => {
     // Arrange
     const requiredFields = ['registeration_number', 'company', 'name', 'price'];
@@ -774,7 +709,6 @@ describe('TC-12: Agregar Vehículos (Vendedor)', () => {
     });
   });
 });
-
 // =====================================================
 // CASO DE PRUEBA TC-13: CAMBIO DE ESTADO DE RESERVAS
 // =====================================================
@@ -797,7 +731,6 @@ describe('TC-13: Cambio de Estado de Reservas (Vendedor)', () => {
     expect(mockUpdatedBooking.status).to.equal('reservado');
     expect(mockUpdatedBooking.updatedBy).to.equal('vendor_123');
   });
-
   it('debería cambiar estado a rechazada', () => {
     // Arrange
     const bookingId = 'booking_123';
@@ -817,26 +750,21 @@ describe('TC-13: Cambio de Estado de Reservas (Vendedor)', () => {
     expect(mockRejectedBooking.status).to.equal('cancelado');
     expect(mockRejectedBooking.rejectionReason).to.equal('Vehículo no disponible');
   });
-
   it('debería notificar al cliente sobre el cambio', () => {
-    // Arrange
-    const userId = 'user_123';
-    
     // Act - Simular notificación
     const mockNotification = {
       id: 'notif_456',
-      userId: userId,
+      userId: 'user_123',
       type: 'status_change',
       message: 'El estado de su reserva ha cambiado',
       sentAt: new Date()
     };
     
     // Assert
-    expect(mockNotification.userId).to.equal(userId);
+    expect(mockNotification.userId).to.equal('user_123');
     expect(mockNotification.type).to.equal('status_change');
   });
 });
-
 // =====================================================
 // CASO DE PRUEBA TC-14: GENERACIÓN DE REPORTES (ADMIN)
 // =====================================================
@@ -867,7 +795,6 @@ describe('TC-14: Generación de Reportes (Administrador)', () => {
     expect(mockVehicleReport.approvedVehicles).to.equal(120);
     expect(mockVehicleReport.pendingVehicles).to.equal(30);
   });
-
   it('debería generar reporte de reservas', () => {
     // Arrange
     const reportType = 'bookings';
@@ -888,7 +815,6 @@ describe('TC-14: Generación de Reportes (Administrador)', () => {
     expect(mockBookingReport.totalBookings).to.equal(500);
     expect(mockBookingReport.revenue).to.equal(75000000);
   });
-
   it('debería exportar reporte en diferentes formatos', () => {
     // Arrange
     const exportFormats = ['PDF', 'Excel', 'CSV'];
@@ -906,7 +832,6 @@ describe('TC-14: Generación de Reportes (Administrador)', () => {
     expect(mockExport.downloadUrl).to.exist;
   });
 });
-
 // =====================================================
 // CASO DE PRUEBA TC-15: EDICIÓN DE VEHÍCULOS (VENDEDOR)
 // =====================================================
@@ -933,7 +858,6 @@ describe('TC-15: Edición de Vehículos (Vendedor)', () => {
     expect(mockUpdatedVehicle.description).to.equal('Vehículo actualizado con nueva información');
     expect(mockUpdatedVehicle.updatedBy).to.equal('vendor_123');
   });
-
   it('debería validar cambios antes de guardar', () => {
     // Arrange
     const originalPrice = 120000;
@@ -947,7 +871,6 @@ describe('TC-15: Edición de Vehículos (Vendedor)', () => {
     expect(priceChange).to.equal(10000);
     expect(isValidChange).to.be.true;
   });
-
   it('debería mantener historial de cambios', () => {
     // Arrange
     const vehicleId = 'vehicle_123';
@@ -972,38 +895,32 @@ describe('TC-15: Edición de Vehículos (Vendedor)', () => {
     expect(mockChangeHistory[0].newValue).to.equal(130000);
   });
 });
-
 // =====================================================
 // FUNCIONES AUXILIARES PARA PRUEBAS
 // =====================================================
-
 // Función para simular validación de email
 function validateEmail(email) {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 }
-
 // Función para simular validación de contraseña
 function validatePassword(password) {
   return password.length >= 8 && 
          /[A-Z]/.test(password) && 
          /[a-z]/.test(password) && 
-         /[0-9]/.test(password) && 
+         /\d/.test(password) && 
          /[!@#$%^&*]/.test(password);
 }
-
 // Función para simular cálculo de precio total
 function calculateTotalPrice(pricePerDay, days) {
   return pricePerDay * days;
 }
-
 // Función para simular verificación de disponibilidad
 function checkVehicleAvailability(vehicle, startDate, endDate) {
   return vehicle.available && 
          vehicle.status === 'disponible' && 
          startDate > new Date();
 }
-
 // =====================================================
 // PRUEBAS DE FUNCIONES AUXILIARES
 // =====================================================
@@ -1014,19 +931,16 @@ describe('Funciones Auxiliares', () => {
     expect(validateEmail('invalid-email')).to.be.false;
     expect(validateEmail('test@')).to.be.false;
   });
-
   it('debería validar contraseña correctamente', () => {
     expect(validatePassword('Password123!')).to.be.true;
     expect(validatePassword('weak')).to.be.false;
     expect(validatePassword('12345678')).to.be.false;
   });
-
   it('debería calcular precio total correctamente', () => {
     expect(calculateTotalPrice(100000, 3)).to.equal(300000);
     expect(calculateTotalPrice(50000, 1)).to.equal(50000);
     expect(calculateTotalPrice(75000, 0)).to.equal(0);
   });
-
   it('debería verificar disponibilidad del vehículo', () => {
     const mockVehicle = {
       available: true,
@@ -1038,7 +952,6 @@ describe('Funciones Auxiliares', () => {
     expect(checkVehicleAvailability(mockVehicle, new Date(), futureDate)).to.be.false;
   });
 });
-
 console.log('✅ Todas las pruebas unitarias del backend han sido definidas correctamente');
 console.log('📊 Total de casos de prueba implementados: 15');
 console.log('🔧 Funciones auxiliares incluidas: 4');
