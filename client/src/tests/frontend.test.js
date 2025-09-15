@@ -39,7 +39,6 @@ const TEST_CONFIG = {
 // FUNCIONES AUXILIARES
 // =====================================================
 function generateValidPassword() {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
   let password = 'Test'; // Uppercase + lowercase
   password += Math.floor(Math.random() * 1000); // Digit
   password += '!'; // Special char
