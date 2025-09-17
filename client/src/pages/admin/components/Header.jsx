@@ -3,7 +3,7 @@ import { addVehicleClicked } from '../../../redux/adminSlices/actions';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
-const Header = ({ category, title }) => {
+const Header = ({ category, title, showAddButton = true }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -31,15 +31,17 @@ const Header = ({ category, title }) => {
           {title}
         </p>
       </div>
-      <button 
-        className="bg-blue-600 rounded-lg text-white px-5 py-2 font-bold" 
-        onClick={handleAddVehicle}
-        onKeyDown={handleKeyDown}
-        type="button"
-        aria-label="Agregar nuevo vehículo"
-      >
-        Agregar+
-      </button>
+      {showAddButton && (
+        <button 
+          className="bg-blue-600 rounded-lg text-white px-5 py-2 font-bold" 
+          onClick={handleAddVehicle}
+          onKeyDown={handleKeyDown}
+          type="button"
+          aria-label="Agregar nuevo vehículo"
+        >
+          Agregar+
+        </button>
+      )}
     </div>
   );
 };
@@ -47,6 +49,7 @@ const Header = ({ category, title }) => {
 Header.propTypes = {
   category: PropTypes.string,
   title: PropTypes.string.isRequired,
+  showAddButton: PropTypes.bool,
 };
 
 export default Header;

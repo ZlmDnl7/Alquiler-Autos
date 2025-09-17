@@ -26,6 +26,7 @@ const VendorHomeMain = () => {
         const vehiclesRes = await fetch("/api/vendor/showVendorVehilces", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: 'include',
           body: JSON.stringify({ _id })
         });
         
@@ -38,6 +39,7 @@ const VendorHomeMain = () => {
         const bookingsRes = await fetch("/api/vendor/showVendorBookings", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: 'include',
           body: JSON.stringify({ _id })
         });
         
@@ -52,13 +54,13 @@ const VendorHomeMain = () => {
         const pendingVehicles = vehicles.filter(v => v.isAdminApproved === false).length;
         
         const totalBookings = bookings.length;
-        const pendingBookings = bookings.filter(b => b.status === 'pending').length;
-        const completedBookings = bookings.filter(b => b.status === 'completed').length;
+        const pendingBookings = bookings.filter(b => b.status === 'noReservado' || b.status === 'reservado').length;
+        const completedBookings = bookings.filter(b => b.status === 'viajeCompletado').length;
         
         // Calcular ganancias (suma de reservas completadas)
         const totalEarnings = bookings
-          .filter(b => b.status === 'completed' && b.payment_status === 'completed')
-          .reduce((sum, b) => sum + (b.total_amount || 0), 0);
+          .filter(b => b.status === 'completed' || b.status === 'viajeCompletado')
+          .reduce((sum, b) => sum + (b.totalPrice || 0), 0);
 
         setVendorStats({
           totalVehicles,
@@ -77,10 +79,11 @@ const VendorHomeMain = () => {
             id: booking._id,
             customer: booking.user_name || 'Cliente',
             vehicle: booking.vehicle_name || 'Vehículo',
-            date: new Date(booking.pickup_date).toLocaleDateString('es-ES'),
-            status: booking.status === 'pending' ? 'Pendiente' : 
-                    booking.status === 'approved' ? 'Aprobada' : 
-                    booking.status === 'completed' ? 'Completada' : 'Pendiente'
+            date: new Date(booking.pickupDate).toLocaleDateString('es-ES'),
+            status: booking.status === 'noReservado' ? 'Pendiente' : 
+                    booking.status === 'reservado' ? 'Reservada' : 
+                    booking.status === 'enViaje' ? 'En Viaje' :
+                    booking.status === 'viajeCompletado' ? 'Completada' : 'Pendiente'
           }));
 
         setRecentBookings(recentBookingsData);

@@ -1,5 +1,6 @@
 import { errorHandler } from "../../utils/error.js";
 import vehicle from "../../models/vehicleModel.js";
+import Booking from "../../models/BookingModel.js";
 import { uploader } from "../../utils/cloudinaryConfig.js";
 import { base64Converter } from "../../utils/multer.js";
 import mongoose from 'mongoose';
@@ -267,7 +268,7 @@ export const vendorEditVehicles = async (req, res, next) => {
   }
 };
 
-//delete vendor Vehicle soft delete
+//delete vendor Vehicle - Physical deletion
 export const vendorDeleteVehicles = async (req, res, next) => {
   try {
     const vehicle_id = req.params.id;
@@ -280,29 +281,30 @@ export const vendorDeleteVehicles = async (req, res, next) => {
       return next(errorHandler(400, error.message));
     }
     
-    // Usar query object explícito para prevenir NoSQL injection
-    const query = { 
-      _id: { $eq: new mongoose.Types.ObjectId(validatedVehicleId) }
-    };
-    
-    const updateData = { 
-      $set: { isDeleted: "true" }
-    };
-    
-    const softDeleted = await vehicle.findOneAndUpdate(
-      query,
-      updateData,
-      { new: true }
-    );
+    // First check if vehicle exists
+    const vehicleToDelete = await vehicle.findById(validatedVehicleId);
+    if (!vehicleToDelete) {
+      return next(errorHandler(404, "Vehicle not found"));
+    }
 
-    if (!softDeleted) {
-      return next(errorHandler(400, "vehicle not found"));
+    // Delete all related bookings first
+    await Booking.deleteMany({ vehicleId: validatedVehicleId });
+    console.log(`Deleted bookings for vehicle ${validatedVehicleId}`);
+
+    // Then delete the vehicle physically
+    const deleted = await vehicle.findByIdAndDelete(validatedVehicleId);
+
+    if (!deleted) {
+      return next(errorHandler(404, "Vehicle not found"));
     }
     
-    res.status(200).json({ message: "deleted successfully" });
+    res.status(200).json({ 
+      message: "Vehicle deleted successfully from database",
+      vehicleId: validatedVehicleId 
+    });
   } catch (error) {
     console.log("Error in vendorDeleteVehicles:", error);
-    next(errorHandler(500, "error while vendorDeleteVehicles"));
+    next(errorHandler(500, "Error while deleting vehicle"));
   }
 };
 
@@ -322,19 +324,19 @@ export const showVendorVehicles = async (req, res, next) => {
       return next(errorHandler(400, error.message));
     }
     
-    // Usar query object explícito en aggregation pipeline
+    // Usar query object explícito en aggregation pipeline - usar $ne para excluir true
     const matchStage = {
       $match: {
-        isDeleted: { $eq: "false" },
+        isDeleted: { $ne: true },
         isAdminAdded: { $eq: false },
-        addedBy: { $eq: validatedUserId },
+        addedBy: { $eq: validatedUserId }
       }
     };
     
     const vendorsVehicles = await vehicle.aggregate([matchStage]);
     
     if (!vendorsVehicles || vendorsVehicles.length === 0) {
-      throw errorHandler(400, "No vehicles found");
+      return res.status(200).json([]);
     }
     
     res.status(200).json(vendorsVehicles);

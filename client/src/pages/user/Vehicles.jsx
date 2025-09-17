@@ -44,7 +44,7 @@ const Vehicles = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [isLoading , setIsLoading] = useState(true)
-  const BASE_URL = import.meta.env.VITE_PRODUCTION_BACKEND_URL
+  const BASE_URL = import.meta.env.VITE_PRODUCTION_BACKEND_URL || ""
   
   //allVariants are set to null when we enter AllVehicles from navbar
   let refreshToken = localStorage.getItem('refreshToken')
@@ -63,6 +63,8 @@ const Vehicles = () => {
         }
         if (res.ok) {
           const data = await res.json();
+          console.log("Vehículos recibidos del backend:", data);
+          console.log("Cantidad de vehículos:", data.length);
           dispatch(showVehicles(data));
           setIsLoading(false)
         }
@@ -178,16 +180,18 @@ const Vehicles = () => {
          
           {isLoading ? <SkeletonLoader/> : 
             <div className="flex sm:flex-row w-full lg:grid lg:max-w-[1000px] lg:grid-cols-3 justify-center items-center gap-5 flex-wrap mt-5">
-              {
-                (filterdData?.length > 0 // Usar optional chaining
-                  ? filterdData
-                      .filter(cur => cur.isDeleted === "false" && cur.isAdminApproved)
-                      .map(cur => renderVehicleCard(cur))
-                  : userAllVehicles
-                      ?.filter(cur => cur.isDeleted === "false" && cur.isAdminApproved) // Usar optional chaining
-                      .map(cur => renderVehicleCard(cur))
-                )
-              }
+              {(() => {
+                console.log("userAllVehicles:", userAllVehicles);
+                console.log("filterdData:", filterdData);
+                
+                const vehiclesToShow = filterdData?.length > 0 
+                  ? filterdData.filter(cur => cur.isDeleted !== true && cur.isDeleted !== 'true' && cur.isAdminApproved !== false)
+                  : userAllVehicles?.filter(cur => cur.isDeleted !== true && cur.isDeleted !== 'true' && cur.isAdminApproved !== false);
+                
+                console.log("Vehículos filtrados para mostrar:", vehiclesToShow);
+                
+                return vehiclesToShow?.map(cur => renderVehicleCard(cur));
+              })()}
             </div>
           }
         </div>

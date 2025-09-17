@@ -60,10 +60,12 @@ function AllVehicles() {
       });
       
       if (res.ok) {
-        setAllVehicles(allVehicles.filter((cur) => cur._id !== vehicleId));
         toast.success("Vehículo eliminado exitosamente");
+        // Recargar la lista de vehículos
+        fetchVehicles();
       } else {
-        toast.error("Error al eliminar vehículo");
+        const errorData = await res.json();
+        toast.error(errorData.message || "Error al eliminar vehículo");
       }
     } catch (error) {
       console.error("Error deleting vehicle:", error);

@@ -14,43 +14,43 @@ import { setEditData } from "../../../redux/adminSlices/actions";
 function VendorAllVehicles() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { user } = useSelector((state) => state.user);
+  const { currentUser } = useSelector((state) => state.user);
   
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(false);
 
   // Fetch vendor vehicles
-  useEffect(() => {
-    const fetchVehicles = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch("/api/vendor/showVendorVehilces", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: 'include',
-          body: JSON.stringify({ vendorId: user?._id }),
-        });
-        
-        if (res.ok) {
-          const data = await res.json();
-          setVehicles(data || []);
-        } else {
-          toast.error("Error al cargar vehículos");
-        }
-      } catch (error) {
-        console.error("Error fetching vehicles:", error);
+  const fetchVehicles = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/vendor/showVendorVehilces", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: 'include',
+        body: JSON.stringify({ _id: currentUser?._id }),
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        setVehicles(data || []);
+      } else {
         toast.error("Error al cargar vehículos");
-      } finally {
-        setLoading(false);
       }
-    };
-    
-    if (user?._id) {
+    } catch (error) {
+      console.error("Error fetching vehicles:", error);
+      toast.error("Error al cargar vehículos");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (currentUser?._id) {
       fetchVehicles();
     }
-  }, [user?._id]);
+  }, [currentUser?._id]);
 
   // Delete a vehicle
   const handleDelete = async (vehicleId) => {
@@ -61,10 +61,12 @@ function VendorAllVehicles() {
       });
       
       if (res.ok) {
-        setVehicles(vehicles.filter((vehicle) => vehicle._id !== vehicleId));
         toast.success("Vehículo eliminado exitosamente");
+        // Recargar la lista de vehículos
+        fetchVehicles();
       } else {
-        toast.error("Error al eliminar vehículo");
+        const errorData = await res.json();
+        toast.error(errorData.message || "Error al eliminar vehículo");
       }
     } catch (error) {
       console.error("Error deleting vehicle:", error);
@@ -145,7 +147,7 @@ function VendorAllVehicles() {
   return (
     <div className="m-2 md:m-10 mt-24 p-2 md:p-10 bg-white rounded-3xl">
       <div className="flex justify-between items-center mb-4">
-        <Header category="Página" title="Mis Vehículos" />
+        <Header category="Página" title="Mis Vehículos" showAddButton={false} />
         <Button
           variant="contained"
           color="primary"

@@ -1,5 +1,6 @@
 import { errorHandler } from "../../utils/error.js";
-import Vehicle from "../../models/vehicleModel.js"; // Un solo import unificado
+import Vehicle from "../../models/vehicleModel.js";
+import Booking from "../../models/BookingModel.js";
 import { uploader } from "../../utils/cloudinaryConfig.js";
 import { dataUri } from "../../utils/multer.js";
 
@@ -114,10 +115,31 @@ export const addProduct = async (req, res, next) => {
 // Show all vehicles to admin
 export const showVehicles = async (req, res, next) => {
   try {
-    const vehicles = await Vehicle.find({ isDeleted: { $ne: true } });
+    console.log("Admin buscando vehículos...");
+    
+    // Primero obtener todos los vehículos para debug
+    const allVehicles = await Vehicle.find({});
+    console.log("Total vehículos en BD:", allVehicles.length);
+    
+    if (allVehicles.length > 0) {
+      console.log("Primer vehículo:", {
+        id: allVehicles[0]._id,
+        name: allVehicles[0].name || allVehicles[0].car_title,
+        isDeleted: allVehicles[0].isDeleted,
+        isAdminApproved: allVehicles[0].isAdminApproved,
+        isRejected: allVehicles[0].isRejected
+      });
+    }
+    
+    // Filtrar vehículos que NO estén eliminados - usar $ne para excluir true
+    const vehicles = await Vehicle.find({ 
+      isDeleted: { $ne: true }
+    });
+    
+    console.log("Vehículos encontrados para admin:", vehicles.length);
     
     if (vehicles.length === 0) {
-      return next(errorHandler(404, "No vehicles found"));
+      return res.status(200).json([]); // Devolver array vacío en lugar de error
     }
     
     res.status(200).json(vehicles);
@@ -127,7 +149,7 @@ export const showVehicles = async (req, res, next) => {
   }
 };
 
-// Admin delete vehicle
+// Admin delete vehicle - Physical deletion
 export const deleteVehicle = async (req, res, next) => {
   try {
     const vehicle_id = req.params.id;
@@ -136,18 +158,25 @@ export const deleteVehicle = async (req, res, next) => {
       return next(errorHandler(400, "Vehicle ID is required"));
     }
 
-    const deleted = await Vehicle.findByIdAndUpdate(
-      vehicle_id,
-      { isDeleted: true },
-      { new: true }
-    );
+    // First check if vehicle exists
+    const vehicle = await Vehicle.findById(vehicle_id);
+    if (!vehicle) {
+      return next(errorHandler(404, "Vehicle not found"));
+    }
+
+    // Delete all related bookings first
+    await Booking.deleteMany({ vehicleId: vehicle_id });
+    console.log(`Deleted bookings for vehicle ${vehicle_id}`);
+
+    // Then delete the vehicle physically
+    const deleted = await Vehicle.findByIdAndDelete(vehicle_id);
     
     if (!deleted) {
       return next(errorHandler(404, "Vehicle not found"));
     }
     
     res.status(200).json({ 
-      message: "Vehicle deleted successfully",
+      message: "Vehicle deleted successfully from database",
       vehicleId: vehicle_id 
     });
   } catch (error) {

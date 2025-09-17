@@ -5,14 +5,31 @@ import Booking from "../../models/BookingModel.js";
 //show all vehicles to user
 export const listAllVehicles = async (req, res, next) => {
   try {
+    console.log("🔍 Buscando vehículos para usuarios...");
+    
+    // Primero buscar TODOS los vehículos para debug
+    const allVehicles = await Vehicle.find({});
+    console.log("Total de vehículos en BD:", allVehicles.length);
+    
+    if (allVehicles.length > 0) {
+      console.log("Primer vehículo:", {
+        id: allVehicles[0]._id,
+        name: allVehicles[0].name,
+        isDeleted: allVehicles[0].isDeleted,
+        isAdminApproved: allVehicles[0].isAdminApproved,
+        isRejected: allVehicles[0].isRejected
+      });
+    }
+    
+    // Filtrar vehículos disponibles - excluir eliminados - usar $ne para excluir true
     const vehicles = await Vehicle.find({ 
-      isDeleted: false, 
-      isAdminApproved: true,
-      isRejected: false 
+      isDeleted: { $ne: true }
     });
     
+    console.log("Vehículos disponibles para usuarios:", vehicles.length);
+    
     if (vehicles.length === 0) {
-      return next(errorHandler(404, "No vehicles found"));
+      return res.status(200).json([]); // Devolver array vacío en lugar de error
     }
     
     res.status(200).json(vehicles);

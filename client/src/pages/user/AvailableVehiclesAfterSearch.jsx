@@ -45,7 +45,7 @@ const AvailableVehiclesAfterSearch = () => {
   };
 
   const hasAvailableCars = availableCars?.length > 0;
-  const filteredCars = availableCars?.filter(car => car.isDeleted === "false") || [];
+  const filteredCars = availableCars?.filter(car => car.isDeleted !== true && car.isDeleted !== 'true') || [];
 
   return (
     <div>
