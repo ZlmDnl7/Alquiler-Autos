@@ -26,28 +26,29 @@ function AllVehicles() {
     useSelector((state) => state.statusSlice);
 
   // Show vehicles
-  useEffect(() => {
-    const fetchVehicles = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch("/api/admin/showVehicles", {
-          method: "GET",
-          credentials: 'include',
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setAllVehicles(data);
-          dispatch(showVehicles(data));
-        } else {
-          toast.error("Error al cargar vehículos");
-        }
-      } catch (error) {
-        console.error("Error fetching vehicles:", error);
+  const fetchVehicles = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/admin/showVehicles", {
+        method: "GET",
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAllVehicles(data);
+        dispatch(showVehicles(data));
+      } else {
         toast.error("Error al cargar vehículos");
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (error) {
+      console.error("Error fetching vehicles:", error);
+      toast.error("Error al cargar vehículos");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchVehicles();
   }, [isAddVehicleClicked, dispatch]);
 

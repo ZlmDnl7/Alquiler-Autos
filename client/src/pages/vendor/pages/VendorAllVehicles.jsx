@@ -75,6 +75,18 @@ const VendorAllVehicles = () => {
     setShowAddModal(false);
   };
 
+  const handleCreated = () => {
+    // volver a cargar lista
+    fetch("/api/vendor/showVendorVehilces", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ _id }),
+    })
+      .then((r) => r.ok ? r.json() : [])
+      .then((data) => dispatch(setVenodrVehilces(data)))
+      .catch(() => {});
+  };
+
   const columns = [
     {
       field: "image",
@@ -147,7 +159,7 @@ const VendorAllVehicles = () => {
   const rows =
     vendorVehilces &&
     vendorVehilces
-      .filter((vehicle) => vehicle.isDeleted === "false")
+      .filter((vehicle) => vehicle.isDeleted !== true && vehicle.isDeleted !== "true")
       .map((vehicle) => ({
         id: vehicle._id,
         image: vehicle.image[0],
@@ -234,7 +246,7 @@ const VendorAllVehicles = () => {
 
       {/* Modal de creación de vehículos */}
       {showAddModal && (
-        <VendorAddProductModal onClose={handleCloseModal} />
+        <VendorAddProductModal onClose={handleCloseModal} onSuccess={handleCreated} />
       )}
     </div>
   );

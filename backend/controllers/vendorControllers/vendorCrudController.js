@@ -7,16 +7,21 @@ import mongoose from 'mongoose';
 
 // Función para validar ObjectId de MongoDB
 const validateObjectId = (id, fieldName = 'ID') => {
-  if (!id || typeof id !== 'string') {
+  // Permitir string u ObjectId
+  if (!id) {
     throw new Error(`Invalid ${fieldName}: must be a non-empty string`);
   }
-  
-  const trimmedId = id.trim();
-  
+  let value = id;
+  if (typeof id === 'object' && id.toString) {
+    value = id.toString();
+  }
+  if (typeof value !== 'string' || !value.trim()) {
+    throw new Error(`Invalid ${fieldName}: must be a non-empty string`);
+  }
+  const trimmedId = value.trim();
   if (!mongoose.Types.ObjectId.isValid(trimmedId)) {
     throw new Error(`Invalid ${fieldName}: must be a valid MongoDB ObjectId`);
   }
-  
   return trimmedId;
 };
 
@@ -33,7 +38,7 @@ const sanitizeVehicleData = (data) => {
   const requiredFields = [
     'registeration_number', 'company', 'name', 'model', 'title',
     'base_package', 'price', 'year_made', 'fuel_type', 'description',
-    'seat', 'transmition_type', 'car_type', 'location', 'district'
+    'seat', 'transmition_type', 'car_type', 'location', 'district', 'addedBy'
   ];
   
   const sanitized = {};
@@ -89,10 +94,11 @@ export const vendorAddVehicle = async (req, res, next) => {
       addedBy,
     } = sanitizedData;
 
-    // Validar addedBy como ObjectId
+    // Determinar el addedBy: usar body o fallback al user del token
+    const rawAddedBy = addedBy || req.user;
     let validatedAddedBy;
     try {
-      validatedAddedBy = validateObjectId(addedBy, 'addedBy');
+      validatedAddedBy = validateObjectId(rawAddedBy, 'addedBy');
     } catch (error) {
       return next(errorHandler(400, error.message));
     }
@@ -139,7 +145,7 @@ export const vendorAddVehicle = async (req, res, next) => {
               created_at: Date.now(),
               location,
               district,
-              isAdminAdded: "false",
+              isAdminAdded: false,
               addedBy: validatedAddedBy,
               isAdminApproved: false,
             });

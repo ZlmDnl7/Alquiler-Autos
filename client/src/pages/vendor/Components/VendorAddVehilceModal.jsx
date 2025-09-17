@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
@@ -7,7 +7,7 @@ import toast, { Toaster } from "react-hot-toast";
 import { IoMdClose } from "react-icons/io";
 import { useSelector } from "react-redux";
 
-const VendorAddProductModal = ({ onClose }) => {
+const VendorAddProductModal = ({ onClose, onSuccess }) => {
   const { register, handleSubmit, reset, formState: { errors }, watch } = useForm();
   const navigate = useNavigate();
   const { _id } = useSelector((state) => state.user.currentUser);
@@ -110,35 +110,59 @@ const VendorAddProductModal = ({ onClose }) => {
       const res = await fetch("/api/vendor/vendorAddVehicle", {
         method: "POST",
         body: formData,
+        credentials: 'include',
       });
 
       if (res.ok) {
         toast.success("Vehículo enviado para aprobación del administrador");
         reset();
         setSelectedImages([]);
-        onClose(); // Cerrar modal
-        // Recargar la página para mostrar el nuevo vehículo
-        window.location.reload();
+        handleClose();
+        if (typeof onSuccess === 'function') {
+          onSuccess();
+        } else {
+          navigate('/vendorDashboard/vendorAllVeihcles');
+        }
       } else {
-        const errorData = await res.json();
-        toast.error(errorData.message || "Error al crear vehículo");
+        let msg = "Error al crear vehículo";
+        try {
+          const errorData = await res.json();
+          if (errorData?.message) msg = errorData.message;
+        } catch (_) {}
+        toast.error(msg);
       }
     } catch (error) {
-      console.error(error);
-      toast.error("Error de conexión");
+      console.error('Create vehicle error:', error);
+      toast.error(error?.message || "Error de conexión");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // Cierre por tecla ESC
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') handleClose();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
+
   const handleClose = () => {
-    onClose();
+    if (typeof onClose === 'function') {
+      onClose();
+    } else {
+      navigate(-1);
+    }
   };
 
   return (
     <>
       <Toaster />
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div
+        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+        onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
+      >
         <div className="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-gray-800">Agregar Nuevo Vehículo</h2>
