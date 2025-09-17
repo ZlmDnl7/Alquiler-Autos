@@ -34,9 +34,4 @@ const tailwindConfig = {
 //   });
 // }
 
-const combinedConfig = {
-  ...defaultTheme, // Merge defaultTheme
-  ...tailwindConfig // Merge tailwindConfig
-};
-
-export default combinedConfig;
+export default tailwindConfig;

@@ -6,7 +6,7 @@ import { signOut } from "../controllers/userControllers/userController.js";
 import { multerUploads } from "../utils/multer.js";
 
 // Admin controller imports
-import { adminAuth, adminProfiile } from "../controllers/adminControllers/adminController.js";
+import { adminAuth, adminProfile } from "../controllers/adminControllers/adminController.js";
 import { getAllUsers, getDashboardStats } from '../controllers/adminController.js';
 
 // Dashboard controller imports (unified - no more duplicates)
@@ -40,7 +40,7 @@ const router = express.Router();
 
 // Authentication routes
 router.post('/dashboard', signIn, adminAuth);
-router.post('/profile', adminProfiile);
+router.post('/profile', adminProfile);
 router.get('/signout', signOut);
 
 // Vehicle management routes

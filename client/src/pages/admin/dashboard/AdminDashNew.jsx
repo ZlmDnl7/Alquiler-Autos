@@ -1,15 +1,14 @@
 import { Routes, Route } from "react-router-dom";
 import { Navbar, SideBar } from "../components/index.jsx";
 import {
-  AllVehicles,
   AllUsers,
   AllVendors,
   Calender,
   ColorPicker,
   Customers,
   Editor,
-  VenderVehicleRequests,
 } from "../pages";
+import { AllVehicles, VenderVehicleRequests } from "../components";
 import { useSelector } from "react-redux";
 import AdminHomeMain from "../pages/AdminHomeMain.jsx";
 import Bookings from "../components/Bookings.jsx";

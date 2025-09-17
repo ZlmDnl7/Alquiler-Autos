@@ -1,18 +1,24 @@
-import vehicle from "../../models/vehicleModel.js";
+import Vehicle from "../../models/vehicleModel.js";
 import { errorHandler } from "../../utils/error.js";
 import Booking from "../../models/BookingModel.js";
 
 //show all vehicles to user
 export const listAllVehicles = async (req, res, next) => {
   try {
-    const vehicles = await vehicle.find();
-    if (!vehicles) {
-      return next(errorHandler(404, "no vehicles found"));
+    const vehicles = await Vehicle.find({ 
+      isDeleted: false, 
+      isAdminApproved: true,
+      isRejected: false 
+    });
+    
+    if (vehicles.length === 0) {
+      return next(errorHandler(404, "No vehicles found"));
     }
+    
     res.status(200).json(vehicles);
   } catch (error) {
-    console.log("Error in listAllVehicles:", error);
-    next(errorHandler(500, "something went wrong"));
+    console.error("Error in listAllVehicles:", error);
+    next(errorHandler(500, "Error retrieving vehicles"));
   }
 };
 
@@ -23,7 +29,7 @@ export const showVehicleDetails = async (req, res, next) => {
       next(errorHandler(409, "body cannot be empty"));
     }
     const { id } = req.body;
-    const vehicleDetail = await vehicle.findById(id);
+    const vehicleDetail = await Vehicle.findById(id);
     if (!vehicleDetail) {
       return next(errorHandler(404, "no vehicles found"));
     }
@@ -110,17 +116,17 @@ export const searchCar = async (req, res, next) => {
       if (dropofftime.$d <= pickuptime.$d || dateDifferenceInDays < 1) {
         return next(errorHandler(401, "dropoff date should be larger"));
       } else {
-        const search = await vehicle.aggregate([
+        const search = await Vehicle.aggregate([
           {
             $match: {
-              isDeleted: "false",
+              isDeleted: false,
             },
           },
           {
             $match: {
               district: pickup_district,
               location: pickup_location,
-              isBooked: "false",
+              isBooked: false,
             },
           },
           {

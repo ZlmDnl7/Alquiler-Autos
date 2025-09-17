@@ -33,8 +33,11 @@ const port = process.env.PORT || 5000;
 // Conectar a MongoDB
 mongoose
   .connect(process.env.mongo_uri)
-  .then(console.log("connected"))
-  .catch((error) => console.error(error));
+  .then(() => console.log("✅ MongoDB connected successfully"))
+  .catch((error) => {
+    console.error("❌ MongoDB connection error:", error);
+    process.exit(1);
+  });
 
 // Configurar Cloudinary solo para rutas que lo necesiten
 App.use('/api/admin/*', cloudinaryConfig);
@@ -51,7 +54,7 @@ App.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
   const message = err.message || "internal server error";
   return res.status(statusCode).json({
-    succes: false,
+    success: false,
     message,
     statusCode,
   });
@@ -59,5 +62,7 @@ App.use((err, req, res, next) => {
 
 // Iniciar servidor
 App.listen(port, () => {
-  console.log("server listening !");
+  console.log(`🚀 Server listening on port ${port}`);
+  console.log(`🌐 Backend URL: http://localhost:${port}`);
+  console.log(`📱 Frontend should connect to: http://localhost:5173`);
 });

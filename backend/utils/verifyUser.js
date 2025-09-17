@@ -4,9 +4,18 @@ import User from "../models/userModel.js";
 
 // Helper function to extract tokens from headers
 const extractTokensFromHeaders = (req) => {
-  const authHeader = req.headers.authorization?.split(" ")[1];
+  const authHeader = req.headers.authorization;
   if (!authHeader) return { accessToken: null, refreshTokenValue: null };
   
+  // Handle standard Bearer token format
+  if (authHeader.startsWith("Bearer ")) {
+    return {
+      accessToken: authHeader.split(" ")[1],
+      refreshTokenValue: null
+    };
+  }
+  
+  // Handle custom format with comma-separated tokens
   const tokens = authHeader.split(",");
   return {
     refreshTokenValue: tokens[0],

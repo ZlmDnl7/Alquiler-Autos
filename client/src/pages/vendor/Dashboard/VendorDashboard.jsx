@@ -6,7 +6,7 @@ import { useSelector } from "react-redux";
 import { Navbar } from "../../admin/components";
 
 import VendorHomeMain from "./VendorHomeMain";
-import VendorAllVehicles from "../pages/VendorAllVehicles";
+import VendorAllVehicles from "../Components/VendorAllVehicles";
 import VendorSidebar from "../Components/VendorSidebar";
 import VendorBookings from "../Components/VendorBookings";
 

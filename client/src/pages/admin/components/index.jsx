@@ -8,6 +8,8 @@ export {default as Notification} from '../components/Notification.jsx'
 export {default as SideBar } from '../components/SideBar.jsx'
 export {default as ThemeSetter} from '../components/ThemeSetter.jsx'
 export {default as UserProfile} from '../components/UserProfile.jsx'
+export {default as AllVehicles} from '../components/AllVehicles.jsx'
+export {default as VenderVehicleRequests} from '../components/VenderVehicleRequests.jsx'
 
 export {default as Stacked} from '../components/charts/Stack.jsx'
 export {default as LineChart} from '../components/charts/LineCahrt.jsx'

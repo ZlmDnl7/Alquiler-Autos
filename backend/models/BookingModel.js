@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const userSchema = new mongoose.Schema({
+const bookingSchema = new mongoose.Schema({
   vehicleId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Vehicle",
@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
   dropOffDate: { type: Date, required: true },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   pickUpLocation: { type: String, required: true },
+  pickUpDistrict: { type: String, required: false },
   dropOffLocation: { type: String, required: true },
   totalPrice: { type: Number, required: true },
   razorpayOrderId: { type: String, required: false },
@@ -22,6 +23,6 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-const Booking = mongoose.model("Booking", userSchema);
+const Booking = mongoose.model("Booking", bookingSchema);
 
 export default Booking;
