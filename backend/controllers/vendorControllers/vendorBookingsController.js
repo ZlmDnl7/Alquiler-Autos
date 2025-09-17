@@ -1,6 +1,7 @@
 import Booking from '../../models/BookingModel.js';
 import Vehicle from '../../models/vehicleModel.js';
 import { errorHandler } from '../../utils/error.js';
+import { validateMongoId } from '../../utils/validation.js';
 
 export const vendorBookings = async (req, res, next) => {
   try {
@@ -43,13 +44,12 @@ export const showVendorBookings = async (req, res, next) => {
   try {
     const { _id } = req.body;
     
-    if (!_id) {
-      return next(errorHandler(400, "User ID is required"));
-    }
+    // Validar y sanitizar el ID del usuario
+    const sanitizedUserId = validateMongoId(_id, 'User ID');
 
-    // Obtener vehículos del vendor
+    // Obtener vehículos del vendor usando ID sanitizado
     const vendorVehicles = await Vehicle.find({
-      addedBy: _id,
+      addedBy: sanitizedUserId,
       isAdminAdded: false
     });
 
@@ -109,7 +109,13 @@ export const showVendorBookings = async (req, res, next) => {
     res.status(200).json(bookings);
 
   } catch (error) {
-    console.error('Error in showVendorBookings:', error.message);
+    // Manejar errores de validación
+    if (error.message.includes('is required') || 
+        error.message.includes('must be') || 
+        error.message.includes('cannot be')) {
+      return next(errorHandler(400, error.message));
+    }
+    
     next(errorHandler(500, "Error retrieving vendor bookings"));
   }
 };

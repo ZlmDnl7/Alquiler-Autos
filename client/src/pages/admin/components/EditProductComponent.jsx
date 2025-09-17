@@ -14,6 +14,9 @@ import dayjs from "dayjs";
 import toast from "react-hot-toast";
 import { setadminEditVehicleSuccess } from "../../../redux/adminSlices/adminDashboardSlice/StatusSlice";
 
+// Componente separado para el TextField del DatePicker
+const DatePickerTextField = (props) => <TextField {...props} />;
+
 export default function EditProductComponent() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -339,7 +342,7 @@ export default function EditProductComponent() {
                       inputFormat="MM/dd/yyyy"
                       value={field.value || null}
                       onChange={(date) => field.onChange(date)}
-                      textField={(props) => <TextField {...props} />}
+                          textField={DatePickerTextField}
                     />
                   </LocalizationProvider>
                 )}
@@ -356,7 +359,7 @@ export default function EditProductComponent() {
                       inputFormat="MM/dd/yyyy"
                       value={field.value || null}
                       onChange={(date) => field.onChange(date)}
-                      textField={(props) => <TextField {...props} />}
+                          textField={DatePickerTextField}
                     />
                   </LocalizationProvider>
                 )}
@@ -373,7 +376,7 @@ export default function EditProductComponent() {
                       inputFormat="MM/dd/yyyy"
                       value={field.value || null}
                       onChange={(date) => field.onChange(date)}
-                      textField={(props) => <TextField {...props} />}
+                          textField={DatePickerTextField}
                     />
                   </LocalizationProvider>
                 )}

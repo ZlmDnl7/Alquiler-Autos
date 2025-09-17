@@ -1,4 +1,5 @@
 import { errorHandler } from "../utils/error.js";
+import { validateEmail, validateString, handleValidationError } from "../utils/validation.js";
 import User from "../models/userModel.js";
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -48,28 +49,38 @@ const handleDuplicateError = (error) => {
 };
 
 export const signUp = async (req, res, next) => {
-  const { username, email, password, phoneNumber } = req.body;
-  
   try {
-    // Verificar si el usuario ya existe
+    const { username, email, password, phoneNumber } = req.body;
+    
+    // Validar y sanitizar datos de entrada
+    const sanitizedEmail = validateEmail(email);
+    const sanitizedUsername = validateString(username, 'Username', 50);
+    const sanitizedPassword = validateString(password, 'Password', 100);
+    
+    // Verificar si el usuario ya existe usando datos sanitizados
     const existingUser = await User.findOne({ 
-      $or: [{ email }, { username }] 
+      $or: [{ email: sanitizedEmail }, { username: sanitizedUsername }] 
     });
     
-    const validationError = validateExistingUser(existingUser, email, username);
+    const validationError = validateExistingUser(existingUser, sanitizedEmail, sanitizedUsername);
     if (validationError) {
       return next(errorHandler(400, validationError));
     }
     
-    const hashedPassword = bcryptjs.hashSync(password, 10);
-    const userData = createUserData(username, email, hashedPassword, phoneNumber);
+    const hashedPassword = bcryptjs.hashSync(sanitizedPassword, 10);
+    const userData = createUserData(sanitizedUsername, sanitizedEmail, hashedPassword, phoneNumber);
     
     const newUser = new User(userData);
     await newUser.save();
     
     res.status(200).json({ message: "Usuario creado exitosamente" });
   } catch (error) {
-    console.error("Error en signUp:", error);
+    // Manejar errores de validación
+    if (error.message.includes('is required') || 
+        error.message.includes('must be') || 
+        error.message.includes('cannot be')) {
+      return next(errorHandler(400, error.message));
+    }
     
     // Manejar errores específicos de MongoDB
     if (error.code === 11000) {
@@ -77,15 +88,18 @@ export const signUp = async (req, res, next) => {
       return next(errorHandler(400, message));
     }
     
-    next(error);
+    next(errorHandler(500, "Error interno del servidor"));
   }
 };
 
 export const signIn = async (req, res, next) => {
-  const { email, password } = req.body;
-  
   try {
-    const validUser = await User.findOne({ email });
+    const { email, password } = req.body;
+    
+    // Validar y sanitizar email
+    const sanitizedEmail = validateEmail(email);
+    
+    const validUser = await User.findOne({ email: sanitizedEmail });
     if (!validUser) {
       return next(errorHandler(404, "Usuario no encontrado"));
     }
@@ -102,7 +116,7 @@ export const signIn = async (req, res, next) => {
     validUser.refreshToken = refreshToken;
     await validUser.save();
     
-    const { password: pass, ...rest } = validUser._doc;
+    const { password: _, ...rest } = validUser._doc;
     
     res
       .cookie("access_token", token, { httpOnly: true, expires: expireDate })
@@ -110,13 +124,21 @@ export const signIn = async (req, res, next) => {
       .status(200)
       .json(rest);
   } catch (error) {
-    next(error);
+    // Manejar errores de validación
+    if (error.message.includes('is required') || 
+        error.message.includes('must be') || 
+        error.message.includes('cannot be')) {
+      return next(errorHandler(400, error.message));
+    }
+    
+    next(errorHandler(500, "Error interno del servidor"));
   }
 };
 
 export const google = async (req, res, next) => {
   try {
-    const user = await User.findOne({ email: req.body.email });
+    const sanitizedEmail = validateEmail(req.body.email);
+    const user = await User.findOne({ email: sanitizedEmail });
     if (user) {
       const token = jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN);
       const refreshToken = jwt.sign({ id: user._id }, process.env.REFRESH_TOKEN, { expiresIn: "7d" });
@@ -124,7 +146,7 @@ export const google = async (req, res, next) => {
       user.refreshToken = refreshToken;
       await user.save();
       
-      const { password: pass, ...rest } = user._doc;
+      const { password: _, ...rest } = user._doc;
       
       res
         .cookie("access_token", token, { httpOnly: true, expires: expireDate })
@@ -137,7 +159,7 @@ export const google = async (req, res, next) => {
       
       const newUser = new User({
         username: req.body.name.split(" ").join("").toLowerCase() + Math.random().toString(36).slice(-4),
-        email: req.body.email,
+        email: sanitizedEmail,
         password: hashedPassword,
         profilePicture: req.body.photo,
         isUser: true,
@@ -151,7 +173,7 @@ export const google = async (req, res, next) => {
       newUser.refreshToken = refreshToken;
       await newUser.save();
       
-      const { password: pass, ...rest } = newUser._doc;
+      const { password: _, ...rest } = newUser._doc;
       
       res
         .cookie("access_token", token, { httpOnly: true, expires: expireDate })
@@ -160,7 +182,14 @@ export const google = async (req, res, next) => {
         .json(rest);
     }
   } catch (error) {
-    next(error);
+    // Manejar errores de validación
+    if (error.message.includes('is required') || 
+        error.message.includes('must be') || 
+        error.message.includes('cannot be')) {
+      return next(errorHandler(400, error.message));
+    }
+    
+    next(errorHandler(500, "Error interno del servidor"));
   }
 };
 
@@ -191,6 +220,6 @@ export const refreshToken = async (req, res, next) => {
       .status(200)
       .json({ message: "Tokens actualizados exitosamente" });
   } catch (error) {
-    next(error);
+    next(errorHandler(500, "Error interno del servidor"));
   }
 };

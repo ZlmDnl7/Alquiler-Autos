@@ -1,4 +1,5 @@
 import { errorHandler } from "../../utils/error.js";
+import { validateMongoId } from "../../utils/validation.js";
 import Vehicle from "../../models/vehicleModel.js";
 import Booking from "../../models/BookingModel.js";
 import { uploader } from "../../utils/cloudinaryConfig.js";
@@ -152,19 +153,15 @@ export const showVehicles = async (req, res, next) => {
 // Admin delete vehicle - Physical deletion
 export const deleteVehicle = async (req, res, next) => {
   try {
-    const vehicle_id = req.params.id;
+    const vehicle_id = validateMongoId(req.params.id, 'Vehicle ID');
     
-    if (!vehicle_id) {
-      return next(errorHandler(400, "Vehicle ID is required"));
-    }
-
     // First check if vehicle exists
     const vehicle = await Vehicle.findById(vehicle_id);
     if (!vehicle) {
       return next(errorHandler(404, "Vehicle not found"));
     }
 
-    // Delete all related bookings first
+    // Delete all related bookings first using validated ID
     await Booking.deleteMany({ vehicleId: vehicle_id });
     console.log(`Deleted bookings for vehicle ${vehicle_id}`);
 
@@ -180,7 +177,13 @@ export const deleteVehicle = async (req, res, next) => {
       vehicleId: vehicle_id 
     });
   } catch (error) {
-    console.error('Error deleting vehicle:', error.message);
+    // Manejar errores de validación
+    if (error.message.includes('is required') || 
+        error.message.includes('must be') || 
+        error.message.includes('cannot be')) {
+      return next(errorHandler(400, error.message));
+    }
+    
     next(errorHandler(500, "Error deleting vehicle"));
   }
 };

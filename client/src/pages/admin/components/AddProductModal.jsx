@@ -21,6 +21,9 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import {  setLoading, setadminAddVehicleSuccess, setadminCrudError } from "../../../redux/adminSlices/adminDashboardSlice/StatusSlice";
 
+// Componente separado para el TextField del DatePicker
+const DatePickerTextField = (props) => <TextField {...props} />;
+
 export const fetchModelData = async (dispatch) => {
   try {
     const res = await fetch("/api/admin/getVehicleModels", {
@@ -381,7 +384,7 @@ const AddProductModal = () => {
                           inputFormat="MM/dd/yyyy"
                           value={field.value || null}
                           onChange={(date) => field.onChange(date)}
-                          textField={(props) => <TextField {...props} />}
+                          textField={DatePickerTextField}
                         />
                       </LocalizationProvider>
                     )}
@@ -397,7 +400,7 @@ const AddProductModal = () => {
                           inputFormat="MM/dd/yyyy"
                           value={field.value || null}
                           onChange={(date) => field.onChange(date)}
-                          textField={(props) => <TextField {...props} />}
+                          textField={DatePickerTextField}
                         />
                       </LocalizationProvider>
                     )}
@@ -413,7 +416,7 @@ const AddProductModal = () => {
                           inputFormat="MM/dd/yyyy"
                           value={field.value || null}
                           onChange={(date) => field.onChange(date)}
-                          textField={(props) => <TextField {...props} />}
+                          textField={DatePickerTextField}
                         />
                       </LocalizationProvider>
                     )}

@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useDispatch } from "react-redux";
 import { Button } from "@mui/material";
 import { Header } from "../components";
 import toast, { Toaster } from "react-hot-toast";
@@ -10,7 +9,6 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 
 function VenderVehicleRequests() {
-  const dispatch = useDispatch();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -132,7 +130,7 @@ function VenderVehicleRequests() {
             size="small"
             startIcon={<VisibilityIcon />}
             onClick={() => {
-              // TODO: Implementar vista de detalles
+              // Implementar vista de detalles del vehículo
               toast.info("Vista de detalles próximamente");
             }}
           >

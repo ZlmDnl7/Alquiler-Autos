@@ -153,7 +153,7 @@ const UserProfileContent = () => {
               </button>
               
               <button className="px-6 py-3 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white font-semibold rounded-xl shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center gap-2">
-                <span>🔒</span>
+                <span className="text-lg">🔒</span>
                 Cambiar Contraseña
               </button>
               

@@ -263,7 +263,6 @@ body {
   background-size: cover;
   display: flex;
   flex-direction: column;
-  color: #010103;
 }
 
 @media (max-width: 1000px) {
