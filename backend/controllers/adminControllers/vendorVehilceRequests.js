@@ -15,15 +15,11 @@ export const fetchVendorVehilceRequests = async (req, res, next) => {
       },
     ]);
 
-    // Check if array is empty instead of falsy
-    if (vendorRequests.length === 0) {
-      return next(
-        errorHandler(404, "No pending vendor requests found")
-      );
-    }
-
+    // Return empty array if no requests found - this is not an error
     res.status(200).json({
-      message: "Vendor requests fetched successfully",
+      message: vendorRequests.length > 0 
+        ? "Vendor requests fetched successfully" 
+        : "No pending vendor requests found",
       data: vendorRequests,
       count: vendorRequests.length
     });
