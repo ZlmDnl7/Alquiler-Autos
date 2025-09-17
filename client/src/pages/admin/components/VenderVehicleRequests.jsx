@@ -27,16 +27,12 @@ function VenderVehicleRequests() {
         if (res.ok) {
           const data = await res.json();
           setRequests(data.data || []);
-        } else if (res.status === 404) {
-          setRequests([]); // sin toast: no hay solicitudes
         } else {
-          let msg = "No se pudieron cargar las solicitudes";
-          try { const err = await res.json(); if (err?.message) msg = err.message; } catch(_) {}
-          toast.error(msg);
+          toast.error("Error al cargar solicitudes");
         }
       } catch (error) {
         console.error("Error fetching requests:", error);
-        toast.error("No se pudieron cargar las solicitudes");
+        toast.error("Error al cargar solicitudes");
       } finally {
         setLoading(false);
       }
@@ -58,15 +54,13 @@ function VenderVehicleRequests() {
       
       if (res.ok) {
         setRequests(requests.filter(req => req._id !== vehicleId));
-        toast.success("Solicitud aprobada");
+        toast.success("Solicitud aprobada exitosamente");
       } else {
-        let msg = "No se pudo aprobar la solicitud";
-        try { const err = await res.json(); if (err?.message) msg = err.message; } catch(_) {}
-        toast.error(msg);
+        toast.error("Error al aprobar solicitud");
       }
     } catch (error) {
       console.error("Error approving request:", error);
-      toast.error("No se pudo aprobar la solicitud");
+      toast.error("Error al aprobar solicitud");
     }
   };
 
@@ -87,15 +81,13 @@ function VenderVehicleRequests() {
       
       if (res.ok) {
         setRequests(requests.filter(req => req._id !== vehicleId));
-        toast.success("Solicitud rechazada");
+        toast.success("Solicitud rechazada exitosamente");
       } else {
-        let msg = "No se pudo rechazar la solicitud";
-        try { const err = await res.json(); if (err?.message) msg = err.message; } catch(_) {}
-        toast.error(msg);
+        toast.error("Error al rechazar solicitud");
       }
     } catch (error) {
       console.error("Error rejecting request:", error);
-      toast.error("No se pudo rechazar la solicitud");
+      toast.error("Error al rechazar solicitud");
     }
   };
 
