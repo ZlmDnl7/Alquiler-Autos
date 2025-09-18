@@ -1,5 +1,5 @@
 import { errorHandler } from "../utils/error.js";
-import { validateEmail, validateString, handleValidationError } from "../utils/validation.js";
+import { validateEmail, validateString } from "../utils/validation.js";
 import User from "../models/userModel.js";
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -116,7 +116,7 @@ export const signIn = async (req, res, next) => {
     validUser.refreshToken = refreshToken;
     await validUser.save();
     
-    const { password: _, ...rest } = validUser._doc;
+    const { password: _password, ...rest } = validUser._doc;
     
     res
       .cookie("access_token", token, { httpOnly: true, expires: expireDate })
@@ -146,7 +146,7 @@ export const google = async (req, res, next) => {
       user.refreshToken = refreshToken;
       await user.save();
       
-      const { password: _, ...rest } = user._doc;
+      const { password: _password, ...rest } = user._doc;
       
       res
         .cookie("access_token", token, { httpOnly: true, expires: expireDate })
@@ -173,7 +173,7 @@ export const google = async (req, res, next) => {
       newUser.refreshToken = refreshToken;
       await newUser.save();
       
-      const { password: _, ...rest } = newUser._doc;
+      const { password: _password, ...rest } = newUser._doc;
       
       res
         .cookie("access_token", token, { httpOnly: true, expires: expireDate })
@@ -220,6 +220,7 @@ export const refreshToken = async (req, res, next) => {
       .status(200)
       .json({ message: "Tokens actualizados exitosamente" });
   } catch (error) {
+    console.error('Error en refreshToken:', error);
     next(errorHandler(500, "Error interno del servidor"));
   }
 };

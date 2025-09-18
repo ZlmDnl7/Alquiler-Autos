@@ -98,7 +98,7 @@ export const createSafeQuery = (queryParams) => {
   Object.entries(queryParams).forEach(([key, value]) => {
     if (value !== undefined && value !== null) {
       // Sanitizar claves para prevenir inyección
-      const sanitizedKey = key.replace(/[^a-zA-Z0-9_]/g, '');
+      const sanitizedKey = key.replace(/\W/g, '');
       
       if (sanitizedKey && sanitizedKey === key) {
         safeQuery[sanitizedKey] = value;

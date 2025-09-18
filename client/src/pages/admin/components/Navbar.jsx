@@ -20,18 +20,30 @@ const NavButton = ({ title, customFunc, icon, color, dotColor }) => (
   <TooltipComponent content={title} position={"BottomCenter"}>
     <button
       type="button"
-      onClick={() => customFunc()}
+      onClick={customFunc}
       style={{ color }}
-      className="relative text-xl rounded-full p-3 hover:bg-light-gray"
+      className="relative text-xl p-3 hover:bg-gray-100 rounded-full mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+      aria-label={title}
     >
-      <span
-        style={{ background: dotColor }}
-        className="absolute inline-flex rounded-full h-2 w-2 right-2 top-2"
-      />
+      {dotColor && (
+        <span
+          style={{ backgroundColor: dotColor }}
+          className="absolute inline-flex rounded-full right-[8px] top-2 h-2 w-2"
+          aria-hidden="true"
+        />
+      )}
       {icon}
     </button>
   </TooltipComponent>
 );
+
+NavButton.propTypes = {
+  title: PropTypes.string.isRequired,
+  customFunc: PropTypes.func.isRequired,
+  icon: PropTypes.node,
+  color: PropTypes.string,
+  dotColor: PropTypes.string,
+};
 
 const Navbar = () => {
   const dispatch = useDispatch();
@@ -63,34 +75,6 @@ const Navbar = () => {
     }
   };
 
-  const NavButton = ({ title, customFunc, icon, color, dotColor }) => (
-    <TooltipComponent content={title} position={"BottomCenter"}>
-      <button
-        type="button"
-        onClick={customFunc}
-        style={{ color }}
-        className="relative text-xl p-3 hover:bg-gray-100 rounded-full mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-        aria-label={title}
-      >
-        {dotColor && (
-          <span
-            style={{ backgroundColor: dotColor }}
-            className="absolute inline-flex rounded-full right-[8px] top-2 h-2 w-2"
-            aria-hidden="true"
-          />
-        )}
-        {icon}
-      </button>
-    </TooltipComponent>
-  );
-
-  NavButton.propTypes = {
-    title: PropTypes.string.isRequired,
-    customFunc: PropTypes.func.isRequired,
-    icon: PropTypes.node,
-    color: PropTypes.string,
-    dotColor: PropTypes.string,
-  };
 
   return (
     <div className="flex justify-between p-2 md:mx-6 relative">
