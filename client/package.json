@@ -8,8 +8,8 @@
     "build": "vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "test": "mocha src/tests/frontend.test.js",
-    "test:watch": "mocha --watch src/tests/frontend.test.js"
+    "test": "vitest run --coverage",
+    "test:watch": "vitest --coverage"
   },
   "dependencies": {
     "@emotion/react": "^11.11.4",
@@ -71,10 +71,10 @@
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
     "vite": "^5.1.4",
-    "mocha": "^10.2.0",
-    "chai": "^4.3.7",
-    "sinon": "^17.0.1",
-    "jsdom": "^23.0.1",
-    "jsdom-global": "^3.0.2"
+    "vitest": "^1.2.2",
+    "@vitest/coverage-v8": "^1.2.2",
+    "@testing-library/react": "^14.1.2",
+    "@testing-library/jest-dom": "^6.2.0",
+    "jsdom": "^24.0.0"
   }
 }
