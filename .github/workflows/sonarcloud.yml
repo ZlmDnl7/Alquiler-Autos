@@ -24,8 +24,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: |
+            backend/package-lock.json
+            client/package-lock.json
 
-      # Backend Tests & Coverage
+      # Backend Tests & Coverage (Jest)
       - name: Install backend dependencies
         run: |
           cd backend
@@ -34,9 +38,9 @@ jobs:
       - name: Run backend tests with coverage
         run: |
           cd backend
-          npm test
+          npm test -- --coverage --watchAll=false
 
-      # Frontend Tests & Coverage  
+      # Frontend Tests & Coverage (Vitest)  
       - name: Install frontend dependencies
         run: |
           cd client
@@ -46,6 +50,8 @@ jobs:
         run: |
           cd client
           npm test
+        env:
+          NODE_ENV: test
 
       # SonarCloud Analysis
       - name: SonarCloud Scan
